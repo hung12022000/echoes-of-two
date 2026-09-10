@@ -26,12 +26,30 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:run
+      - name: Cache Blender character exports
+        id: character-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            public/models
+            public/textures
+          key: characters-${{ runner.os }}-${{ hashFiles('scripts/build-characters.py', 'scripts/asset-sources.json', 'scripts/texture-sources.json', 'scripts/prepare-assets.mjs') }}
+      - name: Build licensed human models with Blender
+        if: steps.character-cache.outputs.cache-hit != 'true'
+        run: |
+          curl --fail --location --retry 3 https://download.blender.org/release/Blender4.5/blender-4.5.9-linux-x64.tar.xz --output "$RUNNER_TEMP/blender.tar.xz"
+          tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP"
+          BLENDER_PATH="$RUNNER_TEMP/blender-4.5.9-linux-x64/blender" node scripts/prepare-assets.mjs
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REPOSITORY_NAME: echoes-of-two
       - run: npm run verify:dist
+      - name: Install browser for release smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Test production gameplay and recovery
+        run: npm run test:e2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -46,4 +64,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-

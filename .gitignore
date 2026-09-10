@@ -1,4 +1,10 @@
 node_modules
+tools-cache/
+art-source/
+artifacts/
+public/models/*.glb
+public/images/*.png
+public/textures/*.jpg
 dist
 .env
 .env.*

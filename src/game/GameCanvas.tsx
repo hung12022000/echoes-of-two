@@ -1,54 +1,118 @@
-import { useEffect, useRef } from "react";
-import {
-  ArcRotateCamera, Color3, Color4, DirectionalLight, Engine, GlowLayer, HemisphericLight, KeyboardEventTypes,
-  MeshBuilder, PBRMaterial, ParticleSystem, Scene, Texture, TransformNode, Vector3,
-} from "@babylonjs/core";
-import type { Role } from "./rules";
+import { useEffect, useRef, useState } from 'react';
+import { Engine } from '@babylonjs/core/Engines/engine';
+import { Scene } from '@babylonjs/core/scene';
+import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
+import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { loadCharacter } from './player/character';
+import { cameraRelative } from './player/motion';
+import { Encounter, noInput } from './combat/encounter';
+import { buildTemple } from './world/temple';
+import { createWarden } from './boss/warden';
+import { createEffects } from './vfx/effects';
+import { GameSound } from './audio/sound';
+import type { Role } from './rules';
+import { buildVietnam } from './world/vietnam';
+import { terrainHeight } from './world/terrain';
+import { type PeerRoom, parseControls } from '../multiplayer/peerRoom';
+import { applySnapshot, snapshot } from '../multiplayer/gameSnapshot';
+import type { CombatEffect } from './combat/encounter';
 
-const material = (scene: Scene, name: string, color: Color3, metallic = 0.1, roughness = 0.55, emission?: Color3) => {
-  const value = new PBRMaterial(name, scene); value.albedoColor = color; value.metallic = metallic; value.roughness = roughness; if (emission) value.emissiveColor = emission; return value;
-};
-
-const createCharacter = (scene: Scene, name: string, role: Role, position: Vector3): TransformNode => {
-  const root = new TransformNode(`${name}-root`, scene); root.position = position;
-  const primary = role === "hung" ? new Color3(0.95, 0.28, 0.06) : new Color3(0.03, 0.72, 0.95);
-  const accent = role === "hung" ? new Color3(1, 0.67, 0.2) : new Color3(0.92, 0.12, 0.75);
-  const bodyMat = material(scene, `${name}-body`, primary, 0.55, 0.32); const accentMat = material(scene, `${name}-accent`, accent, 0.7, 0.25, accent.scale(0.32));
-  const skinMat = material(scene, `${name}-skin`, new Color3(0.78, 0.47, 0.32), 0, 0.7); const darkMat = material(scene, `${name}-dark`, new Color3(0.035, 0.05, 0.09), 0.8, 0.24);
-  const torso = MeshBuilder.CreateCapsule(`${name}-torso`, { height: 1.45, radius: 0.38 }, scene); torso.parent = root; torso.position.y = 1.05; torso.material = bodyMat;
-  const head = MeshBuilder.CreateSphere(`${name}-head`, { diameter: 0.62, segments: 20 }, scene); head.parent = root; head.position.y = 2.05; head.material = skinMat;
-  const visor = MeshBuilder.CreateTorus(`${name}-visor`, { diameter: 0.45, thickness: 0.055, tessellation: 24 }, scene); visor.parent = root; visor.rotation.x = Math.PI / 2; visor.position.set(0, 2.08, 0.27); visor.material = accentMat;
-  for (const side of [-1, 1]) { const arm = MeshBuilder.CreateCapsule(`${name}-arm-${side}`, { height: 1.05, radius: 0.13 }, scene); arm.parent = root; arm.position.set(side * 0.48, 1.1, 0); arm.rotation.z = side * 0.13; arm.material = bodyMat; const boot = MeshBuilder.CreateBox(`${name}-boot-${side}`, { width: 0.28, height: 0.22, depth: 0.55 }, scene); boot.parent = root; boot.position.set(side * 0.2, 0.18, 0.08); boot.material = darkMat; }
-  const core = MeshBuilder.CreateSphere(`${name}-core`, { diameter: 0.18, segments: 12 }, scene); core.parent = root; core.position.set(0, 1.2, -0.36); core.material = accentMat;
-  return root;
-};
-
-const createEnergyTrail = (scene: Scene, parent: TransformNode, color: Color3) => {
-  const trail = MeshBuilder.CreateTorus("combat-trail", { diameter: 1.3, thickness: 0.035, tessellation: 32 }, scene); trail.parent = parent; trail.position.y = 1.15; trail.rotation.x = Math.PI / 2; trail.material = material(scene, "trail-material", color, 0.1, 0.2, color.scale(0.8)); return trail;
-};
-
-export function GameCanvas({ role }: { role: Role }) {
+export type Quality = 'low' | 'medium' | 'high';
+export interface HudState { role: Role; hp: number; partnerHp: number; motion: string; bossHp: number; phase: number; status: string; marks: number; exposed: number; resonance: number; skill: number; prompt: string; progress: number; message: string; fps: number; x: number; z: number; y: number; partnerX: number; partnerZ: number }
+export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud, room }: { role: Role; quality: Quality; reducedMotion: boolean; muted: boolean; paused: boolean; onHud: (state: HudState) => void; room?: PeerRoom }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const options = useRef({ reducedMotion, muted, paused, onHud }); options.current = { reducedMotion, muted, paused, onHud };
+  const [loading, setLoading] = useState('Đang dựng Vịnh Ngọc…');
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
     const canvas = ref.current; if (!canvas) return;
-    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); const scene = new Scene(engine);
-    scene.clearColor = new Color4(0.015, 0.025, 0.075, 1); scene.fogMode = Scene.FOGMODE_EXP2; scene.fogDensity = 0.018; scene.fogColor = new Color3(0.06, 0.11, 0.22);
-    const camera = new ArcRotateCamera("camera", -Math.PI / 2.4, 1.02, 11, new Vector3(0, 1.2, 0), scene); camera.attachControl(canvas, true); camera.lowerRadiusLimit = 6; camera.upperRadiusLimit = 18; camera.wheelPrecision = 65; camera.fov = 0.95;
-    const sky = new HemisphericLight("sky-light", new Vector3(0, 1, 0), scene); sky.intensity = 0.55; const sun = new DirectionalLight("sun-light", new Vector3(-0.45, -1, 0.25), scene); sun.intensity = 1.4; sun.diffuse = new Color3(1, 0.78, 0.58);
-    const glow = new GlowLayer("cinematic-glow", scene); glow.intensity = 0.72;
-    const stone = material(scene, "cloud-stone", new Color3(0.16, 0.2, 0.3), 0.35, 0.72); const gold = material(scene, "old-gold", new Color3(0.4, 0.24, 0.09), 0.8, 0.3); const cyan = material(scene, "resonance-cyan", new Color3(0.05, 0.22, 0.3), 0.25, 0.2, new Color3(0.02, 0.8, 1)); const magenta = material(scene, "resonance-magenta", new Color3(0.3, 0.03, 0.22), 0.25, 0.2, new Color3(0.95, 0.05, 0.6));
-    const island = MeshBuilder.CreateBox("central-island", { width: 24, height: 0.8, depth: 15 }, scene); island.position.y = -0.8; island.material = stone;
-    const bridge = MeshBuilder.CreateBox("energy-bridge", { width: 8, height: 0.12, depth: 1.25 }, scene); bridge.position.set(0, -0.17, 0); bridge.material = cyan;
-    for (let i = -5; i <= 5; i += 2) { const tower = MeshBuilder.CreateBox(`sky-tower-${i}`, { width: 1.5, height: 4 + Math.abs(i) * 0.17, depth: 1.5 }, scene); tower.position.set(i * 1.55, 1.25, 4.7); tower.material = i % 2 === 0 ? stone : gold; const rune = MeshBuilder.CreateTorus(`tower-rune-${i}`, { diameter: 0.8, thickness: 0.06 }, scene); rune.position.set(tower.position.x, tower.position.y + 1.3, 3.92); rune.rotation.x = Math.PI / 2; rune.material = i % 2 === 0 ? cyan : magenta; }
-    for (const x of [-3.2, 3.2]) { const node = MeshBuilder.CreateCylinder(`mirror-node-${x}`, { height: 0.28, diameter: 0.7, tessellation: 16 }, scene); node.position.set(x, 0.12, -2.8); node.material = x < 0 ? gold : cyan; const ring = MeshBuilder.CreateTorus(`mirror-ring-${x}`, { diameter: 1.25, thickness: 0.05 }, scene); ring.position.copyFrom(node.position); ring.rotation.x = Math.PI / 2; ring.material = x < 0 ? gold : cyan; }
-    const boss = MeshBuilder.CreateIcoSphere("fractured-warden", { radius: 1.2, subdivisions: 2 }, scene); boss.position.set(0, 1.7, -4.2); boss.material = magenta; const shield = MeshBuilder.CreateTorus("boss-shield", { diameter: 3.1, thickness: 0.08, tessellation: 48 }, scene); shield.position.copyFrom(boss.position); shield.rotation.x = Math.PI / 2; shield.material = cyan;
-    const local = createCharacter(scene, "local", role, new Vector3(role === "hung" ? -2 : 2, 0, 1)); const remote = createCharacter(scene, "partner", role === "hung" ? "mei" : "hung", new Vector3(role === "hung" ? 2 : -2, 0, 1)); createEnergyTrail(scene, local, role === "hung" ? new Color3(1, 0.35, 0.05) : new Color3(0.05, 0.8, 1)); createEnergyTrail(scene, remote, role === "hung" ? new Color3(0.92, 0.12, 0.75) : new Color3(1, 0.55, 0.1));
-    const sparks = new ParticleSystem("resonance-particles", 420, scene); sparks.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", scene); sparks.emitter = new Vector3(0, 0.2, 0); sparks.minEmitBox = new Vector3(-10, 0, -6); sparks.maxEmitBox = new Vector3(10, 4, 6); sparks.color1 = new Color4(0.1, 0.8, 1, 0.9); sparks.color2 = new Color4(1, 0.15, 0.7, 0.8); sparks.minSize = 0.02; sparks.maxSize = 0.08; sparks.minLifeTime = 1; sparks.maxLifeTime = 3; sparks.emitRate = 80; sparks.blendMode = ParticleSystem.BLENDMODE_ADD; sparks.start();
-    const pressed = new Set<string>(); let jumpVelocity = 0; let onGround = true;
-    const keyboard = scene.onKeyboardObservable.add((info) => { if (info.type === KeyboardEventTypes.KEYDOWN) pressed.add(info.event.key.toLowerCase()); else pressed.delete(info.event.key.toLowerCase()); });
-    const before = scene.onBeforeRenderObservable.add(() => { const dt = Math.min(engine.getDeltaTime() / 1000, 0.05); const speed = pressed.has("shift") ? 6.5 : 4.4; const direction = new Vector3((pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0), 0, (pressed.has("s") ? 1 : 0) - (pressed.has("w") ? 1 : 0)); if (direction.lengthSquared() > 0) { direction.normalize(); local.position.addInPlace(direction.scale(speed * dt)); local.rotation.y = Math.atan2(direction.x, direction.z); } if (pressed.has(" ") && onGround) { jumpVelocity = 6; onGround = false; } jumpVelocity -= 16 * dt; local.position.y += jumpVelocity * dt; if (local.position.y <= 0) { local.position.y = 0; jumpVelocity = 0; onGround = true; } local.position.x = Math.max(-9, Math.min(9, local.position.x)); local.position.z = Math.max(-5, Math.min(5, local.position.z)); camera.target = Vector3.Lerp(camera.target, local.position.add(new Vector3(0, 1.1, 0)), Math.min(1, dt * 8)); boss.rotation.y += dt * 0.4; shield.rotation.z += dt * 0.7; bridge.scaling.y = 1 + Math.sin(performance.now() * 0.003) * 0.04; });
-    const onResize = () => engine.resize(); window.addEventListener("resize", onResize); engine.runRenderLoop(() => scene.render()); return () => { scene.onKeyboardObservable.remove(keyboard); scene.onBeforeRenderObservable.remove(before); window.removeEventListener("resize", onResize); engine.dispose(); };
-  }, [role]);
-  return <canvas ref={ref} className="game-canvas" aria-label="Thành phố Trên Mây — scene cinematic" />;
+    let disposed = false;
+    let engine: Engine | undefined;
+    let stopNetwork: (() => void) | undefined;
+    const sound = new GameSound();
+    const pressed = new Set<string>(); const edges = new Set<string>();
+    const clear = () => { pressed.clear(); edges.clear(); };
+    const down = (e: KeyboardEvent) => { if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return; if (['Space', 'Tab', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault(); if (!e.repeat) edges.add(e.code); pressed.add(e.code); sound.resume(); };
+    const up = (e: KeyboardEvent) => pressed.delete(e.code);
+    const pointerDown = (e: PointerEvent) => { if (e.button === 0) pressed.add('Attack'); if (e.button === 2) pressed.add('Guard'); canvas.focus(); sound.resume(); };
+    const pointerUp = () => { pressed.delete('Attack'); pressed.delete('Guard'); };
+    const context = (e: Event) => e.preventDefault();
+    const resize = () => engine?.resize();
+    async function boot() {
+      try {
+        setError(''); setLoading('Đang nạp model Hưng & Mei.100 và hoạt ảnh…');
+        engine = new Engine(canvas!, true, { stencil: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+        engine.setHardwareScalingLevel(quality === 'low' ? 1.65 : quality === 'medium' ? 1.2 : 1);
+        const scene = new Scene(engine);
+        const camera = new ArcRotateCamera('cooperative camera', -Math.PI / 2, 1.36, 6.8, new Vector3(0, 1.2 + terrainHeight(0,55), 55), scene);
+        camera.attachControl(canvas!, true); camera.inputs.removeByType('ArcRotateCameraKeyboardMoveInput');
+        const pointerInput = camera.inputs.attached.pointers;
+        if (pointerInput && 'buttons' in pointerInput) (pointerInput as { buttons: number[] }).buttons = [1, 2];
+        camera.lowerRadiusLimit = 2.5; camera.upperRadiusLimit = 15; camera.lowerBetaLimit = 0.35; camera.upperBetaLimit = 1.52; camera.wheelPrecision = 65; camera.fov = 0.78; camera.minZ = 0.1;
+        const { shadows } = buildTemple(scene, quality);
+        const nature = buildVietnam(scene, shadows);
+        const boss = createWarden(scene, shadows), effects = createEffects(scene);
+        const [hung, mei] = await Promise.all([loadCharacter(scene, 'hung', shadows), loadCharacter(scene, 'mei', shadows)]);
+        if (disposed) { scene.dispose(); return; }
+        const characters = { hung, mei };
+        let state = new Encounter(role, Boolean(room)), hudTimer = 0, stepTimer = 0, portrait = false;
+        let networkTimer = 0, seq = 0, remoteInput = noInput(), lastRemoteInput = 0;
+        let pendingEffects: CombatEffect[] = [];
+        stopNetwork = room?.onGame(packet => {
+          if (packet.type === 'input') { const parsed = parseControls(packet.payload); if (parsed) { remoteInput = parsed; lastRemoteInput = performance.now(); } }
+          else { const oldZ=state.local.z; if (applySnapshot(state, packet.payload)) { if(Math.abs(oldZ-state.local.z)>20) camera.alpha=state.local.z<20?Math.PI/2:-Math.PI/2; for (const e of state.effects) { effects.emit(e); sound.play(e.kind); } } }
+        });
+        setLoading('');
+        window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', clear);
+        canvas!.addEventListener('pointerdown', pointerDown); window.addEventListener('pointerup', pointerUp); canvas!.addEventListener('contextmenu', context); window.addEventListener('resize', resize);
+        canvas!.focus();
+        scene.onAfterAnimationsObservable.add(() => {
+          if (options.current.paused || (room && !room.view.connected)) return;
+          characters.hung.pose(state.actors.hung); characters.mei.pose(state.actors.mei);
+        });
+        engine!.runRenderLoop(() => {
+          if (disposed) return;
+          const dt = Math.min(engine!.getDeltaTime() / 1000, 0.05);
+          sound.enabled = !options.current.muted;
+          if (!options.current.paused && (!room || room.view.connected)) {
+            if (edges.has('Tab') && !room) state.swap();
+            if (edges.has('KeyR') && (!room || room.view.isHost)) state = new Encounter(state.activeRole, Boolean(room));
+            if (edges.has('KeyB') && (!room || room.view.isHost)) { state.travelToArena(); camera.alpha=Math.PI/2; camera.radius=7.5;camera.beta=1.24; }
+            if (edges.has('KeyV')) { portrait = !portrait; camera.alpha = state.local.yaw + (portrait ? Math.PI/2 : -Math.PI/2); camera.radius = portrait ? 3.4 : 7.5; camera.beta = portrait ? 1.4 : 1.24; }
+            const movement = cameraRelative(Number(pressed.has('KeyD')) - Number(pressed.has('KeyA')), Number(pressed.has('KeyW')) - Number(pressed.has('KeyS')), camera.alpha);
+            const input = { ...noInput(), ...movement, sprint: pressed.has('ShiftLeft') || pressed.has('ShiftRight'), jump: edges.has('Space'), dodge: edges.has('KeyX'), attack: pressed.has('Attack') || pressed.has('KeyJ'), skill: edges.has('KeyQ'), interact: pressed.has('KeyE'), guard: pressed.has('Guard') || pressed.has('ControlLeft') };
+            if (!room || room.view.isHost) {
+              if (performance.now() - lastRemoteInput > 1500) remoteInput = noInput();
+              state.step(dt, input, remoteInput);
+              remoteInput = { ...remoteInput, jump: false, skill: false, dodge: false };
+              for (const effect of state.effects) { effects.emit(effect); sound.play(effect.kind); }
+              pendingEffects.push(...state.effects); pendingEffects = pendingEffects.slice(-64);
+            }
+            const now = performance.now();
+            if (room && (now - networkTimer >= 1000 / 12 || input.jump || input.skill || input.dodge)) {
+              networkTimer = now;
+              room.sendGame({ type: room.view.isHost ? 'snapshot' : 'input', seq: seq++, payload: room.view.isHost ? snapshot(state, pendingEffects) : input }); pendingEffects = [];
+            }
+            characters.hung.update(state.actors.hung, dt); characters.mei.update(state.actors.mei, dt);
+            effects.update(dt); boss.update(state, options.current.reducedMotion); nature.update(state.elapsed, options.current.reducedMotion);
+            const a = state.local; const target = new Vector3(a.x, (portrait ? 1.35 : 1.2) + terrainHeight(a.x, a.z), a.z);
+            Vector3.LerpToRef(camera.target, target, 1 - Math.exp(-6 * dt), camera.target);
+            stepTimer += dt;
+            if ((a.motion === 'walk' || a.motion === 'run') && stepTimer > (a.motion === 'run' ? 0.27 : 0.38)) { sound.play('step'); stepTimer = 0; }
+          } else clear();
+          edges.clear();
+          scene.animationsEnabled = !options.current.paused && (!room || room.view.connected);
+          scene.render(); hudTimer += dt;
+          if (hudTimer > 0.1) {
+            hudTimer = 0; const a = state.local, p = state.partner;
+            options.current.onHud({ role: a.role, hp: a.hp, partnerHp: p.hp, motion: a.motion, bossHp: state.bossHp, phase: state.phase, status: state.status, marks: state.marks, exposed: state.exposed, resonance: state.resonance, skill: a.skillCooldown, prompt: state.partnerDistance < 2.6 ? p.hp <= 0 ? 'Giữ E · Kéo đồng đội đứng dậy' : 'Giữ E · Cộng hưởng cùng đồng đội' : 'Đến gần đồng đội để cộng hưởng', progress: p.hp <= 0 ? state.reviveProgress / 3 : state.linkProgress / 1.8, message: state.message, fps: Math.round(engine!.getFps()), x: a.x, z: a.z, y: a.y, partnerX: p.x, partnerZ: p.z });
+          }
+        });
+      } catch (cause) { if (!disposed) { setLoading(''); setError(`Không thể tải cảnh 3D. Kiểm tra WebGL/kết nối rồi thử lại. ${cause instanceof Error ? cause.message : 'ASSET_LOAD_FAILED'}`); } }
+    }
+    void boot();
+    return () => { disposed = true; clear(); stopNetwork?.(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', clear); window.removeEventListener('pointerup', pointerUp); window.removeEventListener('resize', resize); canvas.removeEventListener('pointerdown', pointerDown); canvas.removeEventListener('contextmenu', context); sound.dispose(); engine?.dispose(); };
+  }, [role, quality, retry, room]);
+  return <><canvas ref={ref} className="game-canvas" tabIndex={0} aria-label="Vịnh Ngọc — điều khiển nhân vật 3D" />{loading && <div className="loading-panel" role="status"><span className="spinner" /><h2>{loading}</h2><p>Hai nhân vật có rig · 12 animation từ Blender · tài nguyên cảnh khoảng 20 MB</p></div>}{error && <div className="loading-panel" role="alert"><h2>Không thể vào game</h2><p>{error}</p><button onClick={() => setRetry(r => r + 1)}>Thử tải lại</button></div>}</>;
 }
-

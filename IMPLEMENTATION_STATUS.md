@@ -1,33 +1,35 @@
-# Implementation status
+# Implementation status — 2026-09-10
 
-## Milestone 0 — Bootstrap
+This is a playable coastal co-op vertical slice, not acceptance-complete M0–M7. The original specification remains unchanged in GAME_SPEC.md. Earlier checkmarks for puzzle/combat/boss rules did not mean those milestones were fully implemented.
 
-- [x] Vite + React + TypeScript strict scaffold
-- [x] Babylon canvas entry and landing menu
-- [x] Vitest and Playwright configuration
-- [x] GitHub Pages workflow and dist verification
-- [x] `npm install` completed and lockfile committed to workspace
-- [x] `npm run typecheck` pass
-- [x] `npm run test:run` pass (9 tests)
-- [x] `npm run build` pass
-- [x] `npm run verify:dist` pass
-- [x] `npm ci` pass
-- [x] Playwright smoke pass (1 test)
+## Implemented in this revision
 
-## Milestones 1–7
+- Bright responsive landing page with an AI-created Vietnamese coast illustration.
+- Explorable coastal island (approximately 134 × 124 m movement bounds), forest, textured sand/rock, animated sea and original procedural Hòn Trống Mái.
+- Two licensed human GLBs: skin textures, rigs, six motion clips each; original spectacles inspired by the supplied drawing.
+- Camera-relative walk/run/jump/dodge, animation blending, additive combat poses, damage/cooldowns, guard, revival, restart and offline AI.
+- Warden encounter: energy marks, armor exposure, three HP phases, telegraphed ground slam, victory/defeat and pooled VFX.
+- Actual two-person PeerJS/WebRTC room, invitation link, ready gate, host-authoritative simulation, transform/combat snapshots, chat, third-player rejection and reconnect control.
+- Graphics presets, reduced environmental motion, sound mute, error/retry UI, lazy-loaded 3D engine.
+- Reproducible Blender/texture asset pipeline with pinned source commit and texture checksums.
 
-- [~] M1 Single-player foundation (procedural scene/menu preview; controller/input still pending)
-- [~] M2 Multiplayer room (Supabase client abstraction; join/presence protocol still pending)
-- [x] M3 Co-op puzzles (pure rules and version-ready state; scene interaction wiring pending)
-- [x] M4 Combat (intent/result and damage rules; scene encounter wiring pending)
-- [x] M5 Boss (three-phase state rules; boss scene wiring pending)
-- [ ] M6 Art/audio/polish
-- [ ] M7 Release
+## Original milestone audit
 
-## Current plan
+- M0: scaffold, strict TypeScript, build and deployment pipeline implemented.
+- M1: playable controller and one coastal map implemented; full level flow, coyote time, foot IK and obstacle navigation remain.
+- M2: WebRTC transport implemented as a practical alternative. Original Supabase Broadcast/Presence acceptance, production TURN, host migration and persistence remain.
+- M3: original multi-stage co-op puzzles are NOT implemented in the rendered game. Existing pure puzzle rules are not a playable puzzle level.
+- M4: playable basic combat implemented; regular enemies and original full combat/weapon system remain.
+- M5: playable simplified three-phase Warden implemented; original mirror/clone boss mechanics remain.
+- M6: major visual/audio improvement implemented; custom photoreal likenesses, authored paired contact animations, advanced lighting and professional sound remain.
+- M7: release gates and Pages workflow implemented for this slice; full specification acceptance and performance qualification remain.
 
-Build one playable scene with shared state abstractions and procedural art, then gate each milestone on typecheck, tests and production build.
+## Verification evidence
 
-## Verification log
+The unit suite exercises movement, jump edges, bounds, cooldowns/range, marks/exposure, two-player consent for E, revival, slam avoidance, all boss phases through actual attacks, snapshot validation and prior serialization/rules.
 
-2026-09-10: `npm ci` pass; `npm run typecheck` pass; `npm run test:run` pass (9/9); `npm run build` pass; `npm run verify:dist` pass; `npm run test:e2e` pass (1/1). The full two-browser Supabase flow, network reconnect, wired puzzles/combat/boss encounter and release deployment are not yet acceptance-complete.
+Browser automation exercises actual GLB loading and rendering, offline movement/jump/link/boss/restart, invalid room input/mobile layout, missing-asset recovery. Separate online QA uses two isolated Chromium contexts and the real public signaling service to check room joining, ready/start, chat, synchronized movement/boss state, rejection of a third client, and restoration after closing/reopening the guest tab. Run WebGL suites sequentially: parallel software-rendered browsers can overwhelm the test computer and trigger connection timeouts.
+
+Local release budgets: 24.89 MiB total dist, 19.02 MiB required scene artwork/models/textures, approximately 844 KiB all JavaScript combined gzip. Two GLBs each below 12 MiB; six animation groups verified per character.
+
+Hardware rendering quality and 60 FPS are not certified by headless software-rendered tests. See RELEASE_CHECKLIST.md for release gates and KNOWN_ISSUES.md for unfinished work.

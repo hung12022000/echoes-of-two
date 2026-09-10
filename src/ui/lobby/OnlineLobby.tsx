@@ -1,0 +1,9 @@
+import { useState, useSyncExternalStore } from 'react';
+import type { PeerRoom } from '../../multiplayer/peerRoom';
+export function OnlineLobby({ room, onLeave }: { room: PeerRoom; onLeave: () => void }) {
+  const state = useSyncExternalStore(room.subscribe, room.getSnapshot);
+  const [copied, setCopied] = useState(false);
+  const invite = location.origin + import.meta.env.BASE_URL + '?room=' + state.code;
+  async function copy() { try { await navigator.clipboard.writeText(invite); setCopied(true); } catch { setCopied(false); } }
+  return <section className="lobby-card online-lobby"><span className="eyebrow">CHƠI CÙNG NHAU · WEBRTC</span><h3>Hẹn nhau ở Vịnh Ngọc.</h3><div className="room-code" data-testid="room-code">{state.code}</div><p role="status">{state.notice}</p><div className="room-slots"><span>Hưng · Chủ phòng<br /><b>{state.isHost ? state.localReady ? 'Sẵn sàng' : 'Đang chuẩn bị' : state.remoteReady ? 'Sẵn sàng' : 'Đang chuẩn bị'}</b></span><span>Mei.100 · Khách<br /><b>{!state.connected ? 'Chờ kết nối' : (state.isHost ? state.remoteReady : state.localReady) ? 'Sẵn sàng' : 'Đang chuẩn bị'}</b></span></div><label>Link mời<input aria-label="Link mời" readOnly value={invite} onFocus={e => e.target.select()} /></label><div className="lobby-actions"><button onClick={copy}>{copied ? 'Đã chép link' : 'Chép link mời'}</button><button onClick={() => room.ready()} disabled={!state.connected}>{state.localReady ? 'Hủy sẵn sàng' : 'Tôi đã sẵn sàng'}</button>{state.isHost && <button className="primary" onClick={() => room.start()} disabled={!state.connected || !state.localReady || !state.remoteReady}>Bắt đầu cùng nhau</button>}<button onClick={onLeave}>Rời phòng</button></div><p className="privacy-note">Chia sẻ mã riêng với bạn của bạn. WebRTC có thể trao đổi địa chỉ mạng giữa hai bên. Không cần tài khoản; mạng chặn WebRTC có thể cần TURN riêng.</p></section>;
+}

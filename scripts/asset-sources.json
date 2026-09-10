@@ -1,0 +1,31 @@
+{
+  "repository": "microsoft/Microsoft-Rocketbox",
+  "commit": "0943055db6ec570bcef9f2c8b41c9e5467c808f9",
+  "license": "MIT",
+  "files": [
+    "Assets/Animations/all_animations_max_motextr_static/f_cheer_03.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/f_crouch_in.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/f_idle_breathe_01.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/f_wave_01.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/m_cheer_03.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/m_idle_breathe_01.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_static/m_wave_01.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_xy/f_run_neutral.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_xy/f_walk_neutral.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_xy/m_crouch_in.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_xy/m_run_neutral.max.fbx",
+    "Assets/Animations/all_animations_max_motextr_xy/m_walk_neutral.max.fbx",
+    "Assets/Avatars/Adults/Female_Adult_03/Export/Female_Adult_03.fbx",
+    "Assets/Avatars/Adults/Female_Adult_03/Textures/f003_body_color.tga",
+    "Assets/Avatars/Adults/Female_Adult_03/Textures/f003_body_normal.tga",
+    "Assets/Avatars/Adults/Female_Adult_03/Textures/f003_head_color.tga",
+    "Assets/Avatars/Adults/Female_Adult_03/Textures/f003_head_normal.tga",
+    "Assets/Avatars/Adults/Female_Adult_03/Textures/f003_opacity_color.tga",
+    "Assets/Avatars/Adults/Male_Adult_07/Export/Male_Adult_07.fbx",
+    "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_color.tga",
+    "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_normal.tga",
+    "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_color.tga",
+    "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_normal.tga",
+    "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_opacity_color.tga"
+  ]
+}
