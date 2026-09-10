@@ -48,6 +48,10 @@ test('invalid room code is rejected and mobile menu does not overflow', async ({
   await page.getByRole('button', { name: /Vào phòng →/ }).click();
   await expect(page.getByRole('alert')).toContainText('6 ký tự');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('.hero-photo')).toHaveCSS('background-position', /100% 50%/);
+  await page.setViewportSize({width:920,height:1250});
+  await expect(page.locator('.hero-photo')).toHaveCSS('background-position', /85% 50%/);
+  await page.screenshot({path:'artifacts/portrait-menu.png'});
 });
 
 test('asset failure is visible and retry loads a playable scene', async ({ page }) => {
