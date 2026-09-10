@@ -19,8 +19,9 @@ test('landing, real GLBs, movement, jump, cooperation, boss and restart', async 
   await page.keyboard.down('e');
   await expect(page.getByText(/Cộng hưởng thành công/)).toBeVisible();
   await page.keyboard.up('e');
+  const startZ = Number(await state.getAttribute('data-z'));
   await page.keyboard.down('w');
-  await expect.poll(async () => Number(await state.getAttribute('data-z'))).toBeGreaterThan(56);
+  await expect.poll(async () => Number(await state.getAttribute('data-z'))).toBeGreaterThan(startZ + 1);
   await page.keyboard.up('w');
   await page.keyboard.press('Space');
   await expect.poll(async () => Number(await state.getAttribute('data-y')), { intervals: [50,100,100] }).toBeGreaterThan(0.2);
@@ -63,6 +64,10 @@ test('survival crafting, island building and persistent map marker work from the
   await dialog.getByRole('button', { name: 'Thêm marker' }).click();
   await expect(dialog.getByText('Trại thử nghiệm')).toBeVisible();
   await expect(dialog.getByText('Marker được lưu cùng thế giới')).toBeVisible();
+  await page.getByLabel('Đóng sổ tay').click();
+  await page.keyboard.press('g');
+  await expect(dialog.getByRole('heading', { name: /15 giống cây/ })).toBeVisible();
+  await expect(dialog.locator('.crop-catalog article')).toHaveCount(15);
 });
 
 test('invalid room code is rejected and mobile menu does not overflow', async ({ page }) => {

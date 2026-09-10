@@ -2,16 +2,17 @@
 
 [Chơi trên GitHub Pages](https://hung12022000.github.io/echoes-of-two/)
 
-Bản chơi thử 3D survival-crafting trên biển: bờ biển lấy cảm hứng từ Việt Nam, Hòn Trống Mái, hai nhân vật có rig và hoạt ảnh, thu gom, chế tạo theo chuỗi, xây nhà trên đảo, hải đồ persistent, thời tiết, cá mập, phối hợp cộng hưởng và một trận boss ba giai đoạn. Đây là vertical slice, không phải game AAA hoàn chỉnh hay bản sao của một game thương mại.
+Vertical slice 3D survival-crafting trên biển: bắt đầu trên một bè nhỏ, dùng móc kéo vật trôi, mở rộng bè, chế tạo máy, trồng cây, khám phá ba đảo, đánh quái vật phối hợp và trở về Hạ Long. Bối cảnh có biển động, Hòn Trống Mái, ngày–đêm và bảy trạng thái thời tiết. Đây là sản phẩm trình duyệt nguyên bản, không phải bản sao của một game thương mại hay một game AAA hoàn chỉnh.
 
 ## Vòng lặp Oceanbound hiện có
 
-1. Đi quanh đảo và nhấn **F** gần vật trôi/tài nguyên.
-2. Nhấn **C** để xử lý gỗ/sợi, chế tạo công cụ, thức ăn, máy và bộ phận nhà.
+1. Bắt đầu trên bè nhỏ; dùng móc sẵn có và nhấn **F** gần vật trôi/tài nguyên.
+2. Nhấn **C** để dùng 31 công thức xử lý nguyên liệu, chế tạo công cụ, thức ăn, máy và bộ phận nhà.
 3. Nhấn **N** chọn công trình; nhấn **B** để đặt trước mặt hoặc dùng nút đặt trong sổ tay.
 4. Nhấn **M** để mở hải đồ, tạo marker có loại/tên/ghi chú và chọn waypoint.
-5. Theo dõi sinh lực, đói, khát, thể lực, ngày–đêm, dự báo và mức đe dọa.
-6. Xây neo/cột thu lôi, máy lọc, bếp, kho, beacon và một căn nhà để phát triển đảo từ Hoang sơ thành Cứ điểm.
+5. Nhấn **G** để trồng 5 cây nhỏ và 10 cây lớn; từng cây có nước, tiến độ lớn và số lượt thu hoạch riêng.
+6. Theo dõi sinh lực, đói, khát, thể lực, nhiệt độ, độ ướt, ngày–đêm, dự báo và mức đe dọa.
+7. Xây neo/cột thu lôi, máy lọc, bếp, kho, máy hứng mưa, động cơ, tháp canh và căn nhà; lấy ba chìa khóa qua ba đảo để mở cảnh kết máy bay về Hạ Long.
 
 Save cục bộ tự động mỗi 15 giây và có nút **Lưu**. Trong phòng online, host nắm world state; crafting, xây dựng và marker do khách thực hiện được gửi lên host rồi đồng bộ lại.
 
@@ -38,7 +39,7 @@ VITE_TURN_CREDENTIAL=...
 
 ## Điều khiển
 
-WASD di chuyển · Shift chạy · Space nhảy · F thu gom · C chế tạo · I túi đồ · N xây dựng · B đặt · M hải đồ · X né · J/chuột trái đánh · Q kỹ năng · giữ E phối hợp/hồi sinh · chuột phải kéo xoay camera/đỡ · V xem nhân vật · Esc tạm dừng. Tab đổi vai chỉ trong luyện tập. K đến đấu trường, R chơi lại: chỉ chủ phòng hoặc chơi offline.
+WASD di chuyển · Shift chạy · Space nhảy · F dùng móc/thu gom · C chế tạo · I túi đồ · G nông trại · N xây dựng · B đặt · M hải đồ · X né · J/chuột trái đánh · Q kỹ năng · giữ E phối hợp/hồi sinh · chuột kéo nhìn · V đổi góc nhìn thứ nhất/thứ ba · Esc tạm dừng. Tab đổi vai chỉ trong luyện tập. K đến đấu trường, R chơi lại: chỉ chủ phòng hoặc chơi offline.
 
 Khám phá bãi biển hoặc B đến cổ môn. Mei tích 5 dấu năng lượng; Hưng Q trong tầm gần để phá giáp. Cả hai đứng gần và giữ E để hồi phục/tích cộng hưởng; đủ 100% tạo Echo Burst trong trận. Né hoặc nhảy khỏi sóng chấn động của Warden.
 
@@ -68,4 +69,4 @@ Kiểm tra WebRTC thực với hai browser contexts: chạy preview trên 4173 r
 
 Workflow .github/workflows/deploy-pages.yml trên main chạy npm ci, typecheck, unit tests, chuẩn bị assets được cache, build, verify:dist và Playwright trước khi deploy Pages. Pages source phải là GitHub Actions. Base path /echoes-of-two/.
 
-Xem [tình trạng thực tế](IMPLEMENTATION_STATUS.md), [roadmap Oceanbound](OCEANBOUND_EXPANSION.md), [giới hạn](KNOWN_ISSUES.md), [nguồn tài nguyên](ASSET_ATTRIBUTION.md), [đặc tả co-op gốc](GAME_SPEC.md) và [Master Design Oceanbound](docs/Oceanbound_Game_Design_Master.md).
+Xem [tầm nhìn tổng hợp mới nhất](docs/OCEANBOUND_MASTER_VISION_VI.md), [tình trạng thực tế](IMPLEMENTATION_STATUS.md), [roadmap Oceanbound](OCEANBOUND_EXPANSION.md), [giới hạn](KNOWN_ISSUES.md), [nguồn tài nguyên](ASSET_ATTRIBUTION.md), [đặc tả co-op gốc](GAME_SPEC.md) và [Master Design Oceanbound](docs/Oceanbound_Game_Design_Master.md).

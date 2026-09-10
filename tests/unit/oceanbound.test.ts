@@ -6,9 +6,10 @@ describe('Oceanbound survival and crafting', () => {
 
   it('resolves the raw-resource crafting chain and refuses missing materials', () => {
     const game = new OceanSession();
+    const startingFiber = game.view.inventory.fiber;
     expect(game.craft('rope')).toBe(true);
     expect(game.view.inventory.rope).toBe(1);
-    expect(game.view.inventory.fiber).toBe(3);
+    expect(game.view.inventory.fiber).toBe(startingFiber - 3);
     expect(game.craft('plank')).toBe(true);
     expect(game.view.inventory.plank).toBe(1);
     expect(game.craft('hook')).toBe(false);
@@ -51,5 +52,55 @@ describe('Oceanbound survival and crafting', () => {
     expect(guest.craft('rope')).toBe(true);
     expect(guest.view.inventory.fiber).toBe(before);
     expect(sent).toEqual([{ type: 'craft', recipeId: 'rope' }]);
+  });
+
+  it('opens shared storage only after building a chest and transfers items safely', () => {
+    const game = new OceanSession();
+    expect(game.transfer('plastic', 'store')).toBe(false);
+    for (let i = 0; i < 4; i++) game.craft('plank');
+    game.craft('rope'); game.craft('rope'); game.craft('storage'); game.selectBuild('storage');
+    expect(game.placeSelected(8, 50)).toBe(true);
+    const before = game.view.inventory.plastic;
+    expect(game.transfer('plastic', 'store', 2)).toBe(true);
+    expect(game.view.inventory.plastic).toBe(before - 2);
+    expect(game.view.storageInventory.plastic).toBe(2);
+    expect(game.transfer('plastic', 'take')).toBe(true);
+    expect(game.view.storageInventory.plastic).toBe(1);
+  });
+
+  it('turns starter-raft crafting into a playable voyage to island one', () => {
+    const game = new OceanSession();
+    game.gather('raft-wood', 'driftwood', 2); game.gather('raft-fiber', 'fiber', 2);
+    for (let i = 0; i < 4; i++) game.craft('plank');
+    game.craft('charcoal');
+    for (let i = 0; i < 4; i++) game.craft('rope');
+    game.craft('sailcloth'); game.craft('foundation'); game.craft('foundation'); game.craft('purifier'); game.craft('sail');
+    for (const [id, x] of [['foundation', 0], ['foundation', 4], ['purifier', 8], ['sail', 12]] as const) { game.selectBuild(id); expect(game.placeSelected(x, 50)).toBe(true); }
+    expect(game.view.travelReady).toBe(true);
+    expect(game.travel()).toBe(true);
+    expect(game.view).toMatchObject({ currentIsland: 1, phase: 'island', islandName: 'Đảo Rừng Mưa' });
+  });
+
+  it('consumes a rescue kit and applies the co-op wipe penalty while preserving progress', () => {
+    const game = new OceanSession();
+    expect(game.useRescueKit()).toBe(true);
+    expect(game.view.inventory.rescue_kit).toBe(0);
+    const plastic = game.view.inventory.plastic;
+    expect(game.handlePartyDefeat()).toBe(true);
+    expect(game.view.inventory.plastic).toBe(Math.floor(plastic * 0.75));
+    expect(game.view.phase).toBe('raft');
+    expect(game.view.transitionId).toBe(1);
+  });
+
+  it('grows and harvests one of the fifteen crops through a built planter', () => {
+    const game = new OceanSession();
+    game.craft('plank'); game.craft('plank'); game.craft('plank'); game.craft('small_planter');
+    game.selectBuild('small_planter'); expect(game.placeSelected(6, 48)).toBe(true);
+    expect(game.plant('tomato', 6, 48)).toBe(true);
+    expect(game.view.crops[0].growth).toBeGreaterThan(0);
+    game.tick(100, false);
+    expect(game.view.crops[0].growth).toBe(1);
+    expect(game.harvest(game.view.crops[0].id)).toBe(true);
+    expect(game.view.inventory.produce_tomato).toBe(3);
   });
 });

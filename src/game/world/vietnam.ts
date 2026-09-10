@@ -8,7 +8,7 @@ import { ShaderMaterial } from '@babylonjs/core/Materials/shaderMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import type { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator';
 import { mat } from './temple';
-import { terrainHeight } from './terrain';
+import { naturalTerrainHeight, terrainHeight } from './terrain';
 import { createTrongMai } from './trongMai';
 import { naturalSurface } from './surface';
 import { CoastMaterial } from './coastMaterial';
@@ -24,7 +24,7 @@ export function buildVietnam(scene: Scene, shadows: ShadowGenerator) {
   const positions = land.getVerticesData(VertexBuffer.PositionKind)!;
   const colors: number[] = [];
   for (let i = 0; i < positions.length; i += 3) {
-    const x = positions[i], z = positions[i + 2]; positions[i + 1] = terrainHeight(x, z) - 0.02;
+    const x = positions[i], z = positions[i + 2]; positions[i + 1] = naturalTerrainHeight(x, z) - 0.02;
     const radius = Math.hypot(x / 1.08, z - 15);
     const noise = (Math.sin(x * 1.7 + z * 2.3) + 1) * 0.025;
     const sandy = radius > 45;
@@ -88,5 +88,5 @@ export function buildVietnam(scene: Scene, shadows: ShadowGenerator) {
     const ring = MeshBuilder.CreateTube('shoreline foam', { path: points, radius: 0.12, tessellation: 4 }, scene); ring.material = foamMat; return ring;
   });
   void shadows;
-  return { update(time: number, reduced: boolean, weather: 'Trong xanh' | 'Gió mạnh' | 'Bão nhiệt đới' | 'Mắt bão' = 'Trong xanh') { const clock = reduced ? 0 : time; const intensity = weather === 'Bão nhiệt đới' ? 2.2 : weather === 'Gió mạnh' ? 1.45 : weather === 'Mắt bão' ? 0.75 : 1; water.setFloat('time', clock); water.setFloat('intensity', reduced ? Math.min(1, intensity) : intensity); surf.forEach((ring, i) => { ring.visibility = 0.25 + Math.sin(clock * 0.8 + i) * 0.15; }); } };
+  return { update(time: number, reduced: boolean, weather: 'Trong xanh' | 'Gió mạnh' | 'Mưa rào' | 'Giông sét' | 'Bão nhiệt đới' | 'Mắt bão' | 'Mưa tuyết dị thường' = 'Trong xanh', minute = 720) { const clock = reduced ? 0 : time; const severe = weather === 'Bão nhiệt đới' || weather === 'Giông sét'; const intensity = severe ? 2.2 : weather === 'Gió mạnh' || weather === 'Mưa rào' || weather === 'Mưa tuyết dị thường' ? 1.45 : weather === 'Mắt bão' ? 0.75 : 1; water.setFloat('time', clock); water.setFloat('intensity', reduced ? Math.min(1, intensity) : intensity); surf.forEach((ring, i) => { ring.visibility = 0.25 + Math.sin(clock * 0.8 + i) * 0.15; }); const sun = Math.max(0.08, Math.sin((minute - 330) / 780 * Math.PI)); const stormShade = severe ? 0.48 : weather === 'Mưa rào' ? 0.72 : 1; scene.clearColor = new Color4((0.03 + sun * 0.55) * stormShade, (0.08 + sun * 0.72) * stormShade, (0.16 + sun * 0.72) * stormShade, 1); scene.ambientColor = new Color3(0.12 + sun * 0.36, 0.16 + sun * 0.38, 0.22 + sun * 0.4); } };
 }

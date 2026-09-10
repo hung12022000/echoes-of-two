@@ -2,3 +2,4 @@
 /* Keep both travelers in the crop on the app's tall preview and phones. */
 @media(max-aspect-ratio:1/1){.hero-photo{background-position:85% center}}
 @media(max-width:500px){.hero-photo{background-position:right center}}
+.room-chat{z-index:30}.room-chat.disconnected{bottom:8.5rem}@media(max-width:900px){.room-chat.disconnected{bottom:10.5rem}}

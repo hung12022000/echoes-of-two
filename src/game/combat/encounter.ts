@@ -14,7 +14,7 @@ export const bossPosition = { x: 0, z: -4 };
 const distance = (a: V2, b: V2) => Math.hypot(a.x - b.x, a.z - b.z);
 function actor(role: Role): Actor {
   const maxHp = role === 'hung' ? 120 : 90;
-  return { role, x: role === 'hung' ? -1 : 1, z: 55, y: 0, vx: 0, vz: 0, vy: 0, yaw: 0, hp: maxHp, maxHp, motion: 'idle', action: 0, cooldown: 0, skillCooldown: 0, invulnerable: 0, grounded: true, land: 0 };
+  return { role, x: role === 'hung' ? -1 : 1, z: 81, y: 0, vx: 0, vz: 0, vy: 0, yaw: Math.PI, hp: maxHp, maxHp, motion: 'idle', action: 0, cooldown: 0, skillCooldown: 0, invulnerable: 0, grounded: true, land: 0 };
 }
 
 /** Deterministic encounter, simulated by the host online or locally with an AI. */
@@ -162,7 +162,7 @@ export class Encounter {
   private move(a: Actor, dt: number) {
     if (a.hp <= 0) return;
     a.x += a.vx * dt; a.z += a.vz * dt;
-    const r = Math.hypot(a.x / 1.08, a.z - 15); if (r > 62) { a.x *= 62 / r; a.z = 15 + (a.z - 15) * 62 / r; }
+    const r = Math.hypot(a.x / 1.08, a.z - 15); if (r > 70) { a.x *= 70 / r; a.z = 15 + (a.z - 15) * 70 / r; }
     // The Warden's core is solid, avoiding bodies intersecting its pedestal.
     const d = distance(a, bossPosition);
     if (d < 1.6 && d > 0.001) { a.x = bossPosition.x + (a.x - bossPosition.x) * 1.6 / d; a.z = bossPosition.z + (a.z - bossPosition.z) * 1.6 / d; }

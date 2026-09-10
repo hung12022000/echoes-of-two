@@ -33,7 +33,7 @@ jobs:
           path: |
             public/models
             public/textures
-          key: characters-${{ runner.os }}-${{ hashFiles('scripts/build-characters.py', 'scripts/asset-sources.json', 'scripts/texture-sources.json', 'scripts/prepare-assets.mjs') }}
+          key: characters-${{ runner.os }}-${{ hashFiles('scripts/build-characters.py', 'scripts/retexture-outfits.py', 'scripts/asset-sources.json', 'scripts/texture-sources.json', 'scripts/prepare-assets.mjs', 'public/textures/*-body-oceanbound.png') }}
       - name: Build licensed human models with Blender
         if: steps.character-cache.outputs.cache-hit != 'true'
         run: |

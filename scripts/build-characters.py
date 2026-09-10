@@ -63,7 +63,8 @@ def build(role, avatar, prefix):
             bs.inputs['Specular IOR Level'].default_value = 0.28
             output = nodes.new('ShaderNodeOutputMaterial')
             mat.node_tree.links.new(bs.outputs['BSDF'], output.inputs['Surface'])
-            path = folder / 'Textures' / (name + '_color.tga')
+            custom = ROOT / 'public' / 'textures' / (role + '-body-oceanbound.png')
+            path = custom if name.endswith('_body') and custom.exists() else folder / 'Textures' / (name + '_color.tga')
             img = bpy.data.images.load(str(path), check_existing=False)
             img.scale(1024, 1024)
             img.file_format = 'PNG'

@@ -12,7 +12,7 @@ describe('playable human-character encounter',()=>{
   it('accelerates, stops, runs faster and respects the island bounds',()=>{
     const a=new Encounter('hung'),b=new Encounter('hung');advance(a,1,{...noInput(),x:1});advance(b,1,{...noInput(),x:1,sprint:true});
     expect(b.local.x).toBeGreaterThan(a.local.x);advance(a,1);expect(Math.abs(a.local.vx)).toBeLessThan(.01);
-    advance(b,40,{...noInput(),x:1,sprint:true});expect(Math.hypot(b.local.x/1.08,b.local.z-15)).toBeLessThanOrEqual(62.001);
+    advance(b,40,{...noInput(),x:1,sprint:true});expect(Math.hypot(b.local.x/1.08,b.local.z-15)).toBeLessThanOrEqual(70.001);
   });
   it('jumps once, falls and lands without automatic repeat',()=>{
     const state=new Encounter('hung');state.step(.02,{...noInput(),jump:true});expect(state.local.y).toBeGreaterThan(0);

@@ -1,6 +1,11 @@
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
+import { Mesh } from '@babylonjs/core/Meshes/mesh';
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader';
 import { Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Color3 } from '@babylonjs/core/Maths/math.color';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
+import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import type { Scene } from '@babylonjs/core/scene';
 import type { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator';
 import type { AnimationGroup } from '@babylonjs/core/Animations/animationGroup';
@@ -10,6 +15,16 @@ import type { Role } from '../rules';
 import { damp } from './motion';
 import { terrainHeight } from '../world/terrain';
 
+function addOceanboundOutfit(scene: Scene, root: TransformNode, role: Role) {
+  const badgeTexture = new DynamicTexture(`${role} Hưng&Mei badge texture`, { width: 768, height: 256 }, scene, true);
+  badgeTexture.hasAlpha = true;
+  const context = badgeTexture.getContext(); context.clearRect(0, 0, 768, 256);
+  badgeTexture.drawText('Hưng&Mei', null, 168, 'bold italic 112px Arial', '#fff5df', 'transparent', true, true);
+  const badgeMaterial = new StandardMaterial(`${role} Hưng&Mei badge`, scene); badgeMaterial.diffuseTexture = badgeTexture; badgeMaterial.opacityTexture = badgeTexture; badgeMaterial.emissiveColor = new Color3(0.16, 0.02, 0.03); badgeMaterial.backFaceCulling = false;
+  const badge = MeshBuilder.CreatePlane(`${role} Hưng&Mei chest print`, { width: 0.27, height: 0.085, sideOrientation: Mesh.DOUBLESIDE }, scene);
+  badge.parent = root; badge.position.set(0, role === 'hung' ? 1.29 : 1.25, -0.112); badge.material = badgeMaterial;
+}
+
 export async function loadCharacter(scene: Scene, role: Role, shadows: ShadowGenerator) {
   const result = await SceneLoader.ImportMeshAsync('', `${import.meta.env.BASE_URL}models/`, `${role}.glb`, scene);
   const root = new TransformNode(role, scene);
@@ -18,6 +33,7 @@ export async function loadCharacter(scene: Scene, role: Role, shadows: ShadowGen
     mesh.isPickable = false;
     if (mesh.getTotalVertices()) { shadows.addShadowCaster(mesh); mesh.receiveShadows = true; }
   }
+  addOceanboundOutfit(scene, root, role);
   const clips = new Map<string, AnimationGroup>();
   for (const clip of result.animationGroups) {
     const name = ['idle', 'walk', 'run', 'wave', 'victory', 'kneel'].find(n => clip.name.includes(n));
