@@ -1,0 +1,2 @@
+import { test, expect } from "@playwright/test";
+test("landing page starts a playable demo", async ({ page }) => { await page.goto("/"); await expect(page.getByRole("button", { name: "Bắt đầu hành trình" })).toBeVisible(); await page.getByRole("button", { name: "Bắt đầu hành trình" }).click(); await expect(page.getByText("LOBBY · PHÒNG RIÊNG")).toBeVisible(); await page.getByRole("button", { name: /Ready/ }).click(); await expect(page.getByText("Thành phố Trên Mây")).toBeVisible(); });
