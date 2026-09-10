@@ -25,7 +25,7 @@ test('landing, real GLBs, movement, jump, cooperation, boss and restart', async 
   await page.keyboard.press('Space');
   await expect.poll(async () => Number(await state.getAttribute('data-y')), { intervals: [50,100,100] }).toBeGreaterThan(0.2);
   await expect(state).toHaveAttribute('data-y', '0.00');
-  await page.keyboard.press('b');
+  await page.keyboard.press('k');
   await expect.poll(async () => Number(await state.getAttribute('data-z'))).toBeLessThan(10);
   await page.keyboard.press('Tab');
   await expect(state).toHaveAttribute('data-role', 'mei');
@@ -40,6 +40,29 @@ test('landing, real GLBs, movement, jump, cooperation, boss and restart', async 
   await expect(state).toHaveAttribute('data-status', 'explore');
   await expect(state).toHaveAttribute('data-boss-hp', '900');
   expect(errors).toEqual([]);
+});
+
+test('survival crafting, island building and persistent map marker work from the UI', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Bắt đầu hành trình', exact: true }).click();
+  await page.getByLabel('Chất lượng đồ họa').selectOption('low');
+  await page.getByRole('button', { name: /Ready/ }).click();
+  await expect(page.getByTestId('game-state')).toHaveAttribute('data-status', 'explore', { timeout: 90000 });
+  await page.keyboard.press('c');
+  const dialog = page.getByRole('dialog', { name: 'Sổ tay sinh tồn' });
+  const craft = async (name: string) => dialog.locator('article').filter({ hasText: name }).getByRole('button', { name: 'Chế tạo' }).click();
+  await craft('Xẻ ván gỗ'); await craft('Xẻ ván gỗ'); await craft('Bện dây thừng'); await craft('Sàn móng');
+  await page.getByLabel('Đóng sổ tay').click();
+  await page.keyboard.press('n');
+  await dialog.getByRole('button', { name: /Sàn móng/ }).click();
+  await dialog.getByRole('button', { name: 'Đặt tại vị trí hiện tại' }).click();
+  await expect(page.getByText(/Đã xây.*Sàn móng/)).toBeVisible();
+  await page.keyboard.press('m');
+  await dialog.getByLabel('Tên').fill('Trại thử nghiệm');
+  await dialog.getByLabel('Ghi chú').fill('Marker được lưu cùng thế giới');
+  await dialog.getByRole('button', { name: 'Thêm marker' }).click();
+  await expect(dialog.getByText('Trại thử nghiệm')).toBeVisible();
+  await expect(dialog.getByText('Marker được lưu cùng thế giới')).toBeVisible();
 });
 
 test('invalid room code is rejected and mobile menu does not overflow', async ({ page }) => {

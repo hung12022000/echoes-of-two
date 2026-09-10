@@ -32,7 +32,7 @@ export class Encounter {
   telegraph = 0;
   attackTimer = 3;
   elapsed = 0;
-  message = 'Hòn Trống Mái phía trước · Khám phá bờ biển cùng nhau. B: đến đấu trường. Giữ E gần đồng đội để cộng hưởng.';
+  message = 'Hòn Trống Mái phía trước · Khám phá bờ biển cùng nhau. K: đến đấu trường. Giữ E gần đồng đội để cộng hưởng.';
   effects: CombatEffect[] = [];
   private aiCooldown = 0;
   private jumpBuffer = 0;

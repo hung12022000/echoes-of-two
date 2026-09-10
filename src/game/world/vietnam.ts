@@ -35,11 +35,11 @@ export function buildVietnam(scene: Scene, shadows: ShadowGenerator) {
   const groundMaterial=naturalSurface(scene,'forest_ground_04',40);
   new CoastMaterial(groundMaterial,scene);
   land.material=groundMaterial;land.useVertexColors=false;land.receiveShadows=true;
-  const ocean = MeshBuilder.CreateGround('turquoise sea', { width: 1600, height: 1600, subdivisions: 1 }, scene); ocean.position.y = -2.1;
+  const ocean = MeshBuilder.CreateGround('turquoise moving sea', { width: 1600, height: 1600, subdivisions: 96 }, scene); ocean.position.y = -2.1;
   const water = new ShaderMaterial('sunlit wave shader', scene, {
-    vertexSource: 'precision highp float; attribute vec3 position; uniform mat4 worldViewProjection; varying vec3 v; void main(){v=position;gl_Position=worldViewProjection*vec4(position,1.);}',
-    fragmentSource: 'precision highp float; varying vec3 v; uniform float time; void main(){float w=sin(v.x*.18+time*.75+sin(v.z*.12))*sin(v.z*.24-time*.4);float d=clamp(length(v.xz)/200.,0.,1.);vec3 c=mix(vec3(.1,.67,.68),vec3(.12,.43,.57),d);float spark=pow(max(0.,sin(v.x*.8+v.z*.6+time)*sin(v.z*.85-time*.8)),22.);c+=w*.026+spark*vec3(.32,.32,.22);gl_FragColor=vec4(c,1.);}',
-  }, { attributes: ['position'], uniforms: ['worldViewProjection', 'time'] }); ocean.material = water;
+    vertexSource: 'precision highp float; attribute vec3 position; uniform mat4 worldViewProjection; uniform float time; uniform float intensity; varying vec3 v; void main(){vec3 p=position;float a=sin(p.x*.055+time*.82)+sin(p.z*.082-time*.58)+sin((p.x+p.z)*.034+time*1.15);p.y+=a*.16*intensity;v=p;gl_Position=worldViewProjection*vec4(p,1.);}',
+    fragmentSource: 'precision highp float; varying vec3 v; uniform float time; uniform float intensity; void main(){float w=sin(v.x*.18+time*.75+sin(v.z*.12))*sin(v.z*.24-time*.4);float d=clamp(length(v.xz)/200.,0.,1.);vec3 c=mix(vec3(.08,.64,.67),vec3(.08,.32,.45),d);float spark=pow(max(0.,sin(v.x*.8+v.z*.6+time)*sin(v.z*.85-time*.8)),22.);c+=w*.035*intensity+spark*vec3(.4,.38,.25);c=mix(c,vec3(.18,.25,.3),clamp(intensity-1.,0.,1.)*.38);gl_FragColor=vec4(c,1.);}',
+  }, { attributes: ['position'], uniforms: ['worldViewProjection', 'time', 'intensity'] }); ocean.material = water;
   const rock = naturalSurface(scene, 'rock_face_03', 4);
   const leaf = mat(scene, 'tropical leaf', '#37633d', 0, 0.88); leaf.backFaceCulling = false;
   const leafLight = mat(scene, 'sunlit canopy', '#587c3c', 0, 0.94);
@@ -88,5 +88,5 @@ export function buildVietnam(scene: Scene, shadows: ShadowGenerator) {
     const ring = MeshBuilder.CreateTube('shoreline foam', { path: points, radius: 0.12, tessellation: 4 }, scene); ring.material = foamMat; return ring;
   });
   void shadows;
-  return { update(time: number, reduced: boolean) { const clock = reduced ? 0 : time; water.setFloat('time', clock); surf.forEach((ring, i) => { ring.visibility = 0.25 + Math.sin(clock * 0.8 + i) * 0.15; }); } };
+  return { update(time: number, reduced: boolean, weather: 'Trong xanh' | 'Gió mạnh' | 'Bão nhiệt đới' | 'Mắt bão' = 'Trong xanh') { const clock = reduced ? 0 : time; const intensity = weather === 'Bão nhiệt đới' ? 2.2 : weather === 'Gió mạnh' ? 1.45 : weather === 'Mắt bão' ? 0.75 : 1; water.setFloat('time', clock); water.setFloat('intensity', reduced ? Math.min(1, intensity) : intensity); surf.forEach((ring, i) => { ring.visibility = 0.25 + Math.sin(clock * 0.8 + i) * 0.15; }); } };
 }

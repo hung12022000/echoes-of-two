@@ -16,10 +16,12 @@ import { terrainHeight } from './world/terrain';
 import { type PeerRoom, parseControls } from '../multiplayer/peerRoom';
 import { applySnapshot, snapshot } from '../multiplayer/gameSnapshot';
 import type { CombatEffect } from './combat/encounter';
+import { createOceanboundWorld } from './world/oceanbound';
+import type { OceanSession } from './oceanbound/session';
 
 export type Quality = 'low' | 'medium' | 'high';
 export interface HudState { role: Role; hp: number; partnerHp: number; motion: string; bossHp: number; phase: number; status: string; marks: number; exposed: number; resonance: number; skill: number; prompt: string; progress: number; message: string; fps: number; x: number; z: number; y: number; partnerX: number; partnerZ: number }
-export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud, room }: { role: Role; quality: Quality; reducedMotion: boolean; muted: boolean; paused: boolean; onHud: (state: HudState) => void; room?: PeerRoom }) {
+export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud, room, ocean }: { role: Role; quality: Quality; reducedMotion: boolean; muted: boolean; paused: boolean; onHud: (state: HudState) => void; room?: PeerRoom; ocean: OceanSession }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const options = useRef({ reducedMotion, muted, paused, onHud }); options.current = { reducedMotion, muted, paused, onHud };
   const [loading, setLoading] = useState('Đang dựng Vịnh Ngọc…');
@@ -52,6 +54,7 @@ export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud,
         camera.lowerRadiusLimit = 2.5; camera.upperRadiusLimit = 15; camera.lowerBetaLimit = 0.35; camera.upperBetaLimit = 1.52; camera.wheelPrecision = 65; camera.fov = 0.78; camera.minZ = 0.1;
         const { shadows } = buildTemple(scene, quality);
         const nature = buildVietnam(scene, shadows);
+        const oceanWorld = createOceanboundWorld(scene, shadows);
         const boss = createWarden(scene, shadows), effects = createEffects(scene);
         const [hung, mei] = await Promise.all([loadCharacter(scene, 'hung', shadows), loadCharacter(scene, 'mei', shadows)]);
         if (disposed) { scene.dispose(); return; }
@@ -59,9 +62,11 @@ export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud,
         let state = new Encounter(role, Boolean(room)), hudTimer = 0, stepTimer = 0, portrait = false;
         let networkTimer = 0, seq = 0, remoteInput = noInput(), lastRemoteInput = 0;
         let pendingEffects: CombatEffect[] = [];
+        ocean.configureNetwork(room ? room.view.isHost ? 'host' : 'guest' : 'offline', room && !room.view.isHost ? action => room.sendAction(action) : undefined);
         stopNetwork = room?.onGame(packet => {
           if (packet.type === 'input') { const parsed = parseControls(packet.payload); if (parsed) { remoteInput = parsed; lastRemoteInput = performance.now(); } }
-          else { const oldZ=state.local.z; if (applySnapshot(state, packet.payload)) { if(Math.abs(oldZ-state.local.z)>20) camera.alpha=state.local.z<20?Math.PI/2:-Math.PI/2; for (const e of state.effects) { effects.emit(e); sound.play(e.kind); } } }
+          else if (packet.type === 'command') ocean.applyRemoteAction(packet.payload);
+          else { const oldZ=state.local.z; if (applySnapshot(state, packet.payload)) { ocean.importNetwork((packet.payload as { ocean?: unknown }).ocean); if(Math.abs(oldZ-state.local.z)>20) camera.alpha=state.local.z<20?Math.PI/2:-Math.PI/2; for (const e of state.effects) { effects.emit(e); sound.play(e.kind); } } }
         });
         setLoading('');
         window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', clear);
@@ -78,10 +83,16 @@ export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud,
           if (!options.current.paused && (!room || room.view.connected)) {
             if (edges.has('Tab') && !room) state.swap();
             if (edges.has('KeyR') && (!room || room.view.isHost)) state = new Encounter(state.activeRole, Boolean(room));
-            if (edges.has('KeyB') && (!room || room.view.isHost)) { state.travelToArena(); camera.alpha=Math.PI/2; camera.radius=7.5;camera.beta=1.24; }
+            if (edges.has('KeyK') && (!room || room.view.isHost)) { state.travelToArena(); camera.alpha=Math.PI/2; camera.radius=7.5;camera.beta=1.24; }
             if (edges.has('KeyV')) { portrait = !portrait; camera.alpha = state.local.yaw + (portrait ? Math.PI/2 : -Math.PI/2); camera.radius = portrait ? 3.4 : 7.5; camera.beta = portrait ? 1.4 : 1.24; }
             const movement = cameraRelative(Number(pressed.has('KeyD')) - Number(pressed.has('KeyA')), Number(pressed.has('KeyW')) - Number(pressed.has('KeyS')), camera.alpha);
             const input = { ...noInput(), ...movement, sprint: pressed.has('ShiftLeft') || pressed.has('ShiftRight'), jump: edges.has('Space'), dodge: edges.has('KeyX'), attack: pressed.has('Attack') || pressed.has('KeyJ'), skill: edges.has('KeyQ'), interact: pressed.has('KeyE'), guard: pressed.has('Guard') || pressed.has('ControlLeft') };
+            const actor = state.local;
+            const nearby = oceanWorld.nearestResource(actor.x, actor.z);
+            ocean.setNearby(nearby);
+            ocean.setPosition(actor.x, actor.z);
+            if (edges.has('KeyF') && nearby && ocean.gather(nearby.nodeId, nearby.item, nearby.amount)) oceanWorld.collect(nearby.nodeId);
+            if (edges.has('KeyB')) ocean.placeSelected(actor.x + Math.sin(actor.yaw) * 2.4, actor.z + Math.cos(actor.yaw) * 2.4, actor.yaw);
             if (!room || room.view.isHost) {
               if (performance.now() - lastRemoteInput > 1500) remoteInput = noInput();
               state.step(dt, input, remoteInput);
@@ -92,10 +103,13 @@ export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud,
             const now = performance.now();
             if (room && (now - networkTimer >= 1000 / 12 || input.jump || input.skill || input.dodge)) {
               networkTimer = now;
-              room.sendGame({ type: room.view.isHost ? 'snapshot' : 'input', seq: seq++, payload: room.view.isHost ? snapshot(state, pendingEffects) : input }); pendingEffects = [];
+              room.sendGame({ type: room.view.isHost ? 'snapshot' : 'input', seq: seq++, payload: room.view.isHost ? { ...snapshot(state, pendingEffects), ocean: ocean.exportNetwork() } : input }); pendingEffects = [];
             }
+            ocean.tick(dt, Math.hypot(actor.vx, actor.vz) > 0.3);
+            oceanWorld.syncBuildings(ocean.view.buildings);
             characters.hung.update(state.actors.hung, dt); characters.mei.update(state.actors.mei, dt);
-            effects.update(dt); boss.update(state, options.current.reducedMotion); nature.update(state.elapsed, options.current.reducedMotion);
+            effects.update(dt); boss.update(state, options.current.reducedMotion); nature.update(state.elapsed, options.current.reducedMotion, ocean.view.weather);
+            oceanWorld.update(state.elapsed, ocean.view.weather, options.current.reducedMotion);
             const a = state.local; const target = new Vector3(a.x, (portrait ? 1.35 : 1.2) + terrainHeight(a.x, a.z), a.z);
             Vector3.LerpToRef(camera.target, target, 1 - Math.exp(-6 * dt), camera.target);
             stepTimer += dt;
@@ -113,6 +127,6 @@ export function GameCanvas({ role, quality, reducedMotion, muted, paused, onHud,
     }
     void boot();
     return () => { disposed = true; clear(); stopNetwork?.(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', clear); window.removeEventListener('pointerup', pointerUp); window.removeEventListener('resize', resize); canvas.removeEventListener('pointerdown', pointerDown); canvas.removeEventListener('contextmenu', context); sound.dispose(); engine?.dispose(); };
-  }, [role, quality, retry, room]);
+  }, [role, quality, retry, room, ocean]);
   return <><canvas ref={ref} className="game-canvas" tabIndex={0} aria-label="Vịnh Ngọc — điều khiển nhân vật 3D" />{loading && <div className="loading-panel" role="status"><span className="spinner" /><h2>{loading}</h2><p>Hai nhân vật có rig · 12 animation từ Blender · tài nguyên cảnh khoảng 20 MB</p></div>}{error && <div className="loading-panel" role="alert"><h2>Không thể vào game</h2><p>{error}</p><button onClick={() => setRetry(r => r + 1)}>Thử tải lại</button></div>}</>;
 }

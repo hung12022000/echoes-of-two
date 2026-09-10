@@ -1,8 +1,18 @@
-# Implementation status — 2026-09-10
+# Implementation status — 2026-09-11
 
 This is a playable coastal co-op vertical slice, not acceptance-complete M0–M7. The original specification remains unchanged in GAME_SPEC.md. Earlier checkmarks for puzzle/combat/boss rules did not mean those milestones were fully implemented.
 
 ## Implemented in this revision
+
+- Oceanbound playable loop layered onto the existing coastal game without replacing Hưng or Mei.100.
+- Data-driven catalog with 24 item definitions and 17 recipes across survival, tools, building and storm defense.
+- Gatherable world resources with respawn, hook collection bonus and chain crafting from raw resources to materials, devices and structures.
+- Survival simulation for health, hunger, thirst and stamina; consumable water/coconut/fish; safe recovery instead of abrupt permanent death.
+- Animated vertex-displaced ocean, bobbing starter raft, floating salvage, visible reef shark and a forecasted clear/wind/storm/eye cycle.
+- Grid-quantized placement and rendered 3D pieces for foundations, walls, doors, roofs, storage, purifier, grill, claim beacon, storm anchor and lightning rod.
+- Persistent island development, autosave, map markers with notes/types, selectable waypoint and a reusable save schema.
+- Host-authoritative synchronization for survival crafting/build/marker commands and world snapshots.
+- WebRTC now uses multiple STUN endpoints, four automatic connection attempts, optional production TURN configuration and direct/relay diagnostics.
 
 - Bright responsive landing page with an AI-created Vietnamese coast illustration.
 - Explorable coastal island (approximately 134 × 124 m movement bounds), forest, textured sand/rock, animated sea and original procedural Hòn Trống Mái.
@@ -28,7 +38,7 @@ This is a playable coastal co-op vertical slice, not acceptance-complete M0–M7
 
 The unit suite exercises movement, jump edges, bounds, cooldowns/range, marks/exposure, two-player consent for E, revival, slam avoidance, all boss phases through actual attacks, snapshot validation and prior serialization/rules.
 
-Browser automation exercises actual GLB loading and rendering, offline movement/jump/link/boss/restart, invalid room input/mobile layout, missing-asset recovery. Separate online QA uses two isolated Chromium contexts and the real public signaling service to check room joining, ready/start, chat, synchronized movement/boss state, rejection of a third client, and restoration after closing/reopening the guest tab. Run WebGL suites sequentially: parallel software-rendered browsers can overwhelm the test computer and trigger connection timeouts.
+Browser automation exercises actual GLB loading and rendering, survival crafting/building/map marker flow, offline movement/jump/link/boss/restart, invalid room input/mobile layout and missing-asset recovery. Separate online QA uses two isolated Chromium contexts and the real public signaling service to check room joining, ready/start, chat, host-authoritative crafting, synchronized movement/boss state and restoration after closing/reopening the guest tab. The optional third-client rejection stress check is available with `QA_THIRD=1`. Run WebGL suites sequentially: parallel software-rendered browsers can overwhelm the test computer and trigger connection timeouts.
 
 Local release budgets: 24.89 MiB total dist, 19.02 MiB required scene artwork/models/textures, approximately 844 KiB all JavaScript combined gzip. Two GLBs each below 12 MiB; six animation groups verified per character.
 

@@ -45,6 +45,9 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_REPOSITORY_NAME: echoes-of-two
+          VITE_TURN_URL: ${{ secrets.VITE_TURN_URL }}
+          VITE_TURN_USERNAME: ${{ secrets.VITE_TURN_USERNAME }}
+          VITE_TURN_CREDENTIAL: ${{ secrets.VITE_TURN_CREDENTIAL }}
       - run: npm run verify:dist
       - name: Install browser for release smoke tests
         run: npx playwright install --with-deps chromium

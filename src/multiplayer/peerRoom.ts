@@ -3,9 +3,9 @@ import { makeRoomCode, type Role } from '../game/rules';
 import type { Controls } from '../game/combat/encounter';
 
 export interface ChatLine { id: string; role: Role; text: string }
-export interface RoomView { code: string; isHost: boolean; connected: boolean; localReady: boolean; remoteReady: boolean; started: boolean; notice: string; ping: number; chat: ChatLine[] }
+export interface RoomView { code: string; isHost: boolean; connected: boolean; localReady: boolean; remoteReady: boolean; started: boolean; notice: string; ping: number; chat: ChatLine[]; route: 'đang dò' | 'trực tiếp' | 'relay' }
 type Listener = () => void;
-export interface GamePacket { type: 'input' | 'snapshot'; seq: number; payload: unknown }
+export interface GamePacket { type: 'input' | 'snapshot' | 'command'; seq: number; payload: unknown }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export function parseControls(v: unknown): Controls | null {
   if (!record(v) || typeof v.x !== 'number' || typeof v.z !== 'number' || !Number.isFinite(v.x) || !Number.isFinite(v.z)) return null;
@@ -26,13 +26,16 @@ export class PeerRoom {
   private heartbeat?: ReturnType<typeof setInterval>;
   private lastChat = 0;
   private lastReceivedChat = 0;
-  private lastSeq = -1;
+  private lastSeq: Record<GamePacket['type'], number> = { input: -1, snapshot: -1, command: -1 };
+  private commandSeq = 0;
+  private connectAttempts = 0;
+  private retryTimer?: ReturnType<typeof setTimeout>;
   private lastSeen = 0;
   private heartbeatGraceUntil = 0;
   private disposed = false;
   private state: RoomView;
   constructor(isHost: boolean, code = makeRoomCode()) {
-    this.state = { code: code.toUpperCase().trim(), isHost, connected: false, localReady: false, remoteReady: false, started: false, notice: 'Đang kết nối máy chủ tạo phòng…', ping: 0, chat: [] };
+    this.state = { code: code.toUpperCase().trim(), isHost, connected: false, localReady: false, remoteReady: false, started: false, notice: 'Đang kết nối máy chủ tạo phòng…', ping: 0, chat: [], route: 'đang dò' };
   }
   get role(): Role { return this.state.isHost ? 'hung' : 'mei'; }
   get view() { return this.state; }
@@ -42,12 +45,18 @@ export class PeerRoom {
   onGame(fn: (packet: GamePacket) => void) { this.gameListeners.add(fn); return () => { this.gameListeners.delete(fn); }; }
   connect() {
     if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(this.state.code)) { this.update({ notice: 'Mã phòng cần 6 ký tự hợp lệ.' }); return; }
-    const options = { debug: 0, secure: true };
+    const turnUrl = import.meta.env.VITE_TURN_URL?.trim();
+    const iceServers: RTCIceServer[] = [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+    ];
+    if (turnUrl) iceServers.push({ urls: turnUrl.split(',').map(url => url.trim()).filter(Boolean), username: import.meta.env.VITE_TURN_USERNAME ?? '', credential: import.meta.env.VITE_TURN_CREDENTIAL ?? '' });
+    const options = { debug: 0, secure: true, config: { iceServers, iceCandidatePoolSize: 4 } satisfies RTCConfiguration };
     this.peer = this.state.isHost ? new Peer('echoes-v2-' + this.state.code, options) : new Peer(options);
     this.timer = setTimeout(() => { if (!this.state.connected) this.update({ notice: this.state.isHost ? 'Phòng đã mở. Chia sẻ mã với người thứ hai; nếu kết nối bị chặn, hãy thử mạng khác.' : 'Không kết nối được trong 20 giây. Kiểm tra mã, chủ phòng còn mở tab và mạng cho phép WebRTC.' }); }, 20000);
     this.peer.on('open', () => {
       if (this.state.isHost) this.update({ notice: 'Phòng đã mở · chờ Mei.100. Gửi link mời cho người chơi còn lại.' });
-      else this.attach(this.peer!.connect('echoes-v2-' + this.state.code, { reliable: true, serialization: 'json' }));
+      else this.connectGuest();
     });
     this.peer.on('connection', connection => {
       if (!this.state.isHost || (this.guestId && this.guestId !== connection.peer)) {
@@ -69,7 +78,7 @@ export class PeerRoom {
   }
   private attach(connection: DataConnection) {
     this.connection = connection;
-    connection.on('open', () => { clearTimeout(this.timer); this.lastSeq = -1; this.lastSeen = Date.now(); this.heartbeatGraceUntil = Date.now()+60000; this.update({ connected: true, notice: 'Hai người đã kết nối trực tiếp.' }); this.sendLobby(); });
+    connection.on('open', () => { clearTimeout(this.timer); clearTimeout(this.retryTimer); this.connectAttempts = 0; this.lastSeq = { input: -1, snapshot: -1, command: -1 }; this.lastSeen = Date.now(); this.heartbeatGraceUntil = Date.now()+60000; this.update({ connected: true, notice: 'Hai người đã kết nối. Đang kiểm tra tuyến truyền…' }); this.inspectRoute(connection); this.sendLobby(); });
     connection.on('close', () => { if (this.connection !== connection || this.disposed || this.state.notice.includes('ROOM_FULL')) return; this.update({ connected: false, remoteReady: false, notice: 'Đồng đội mất kết nối. Trận đấu được tạm dừng; có thể kết nối lại hoặc về trang chính.' }); });
     connection.on('error', () => this.update({ connected: false, notice: 'Kết nối bị gián đoạn. Hãy thử kết nối lại.' }));
     connection.on('data', data => { if (this.connection !== connection) return; this.lastSeen=Date.now();this.receive(data); });
@@ -79,6 +88,7 @@ export class PeerRoom {
   ready() { this.update({ localReady: !this.state.localReady }); this.sendLobby(); }
   start() { if (!this.state.isHost || !this.state.connected || !this.state.localReady || !this.state.remoteReady) return; this.update({ started: true }); this.send({ type: 'start' }); }
   sendGame(packet: GamePacket) { this.send(packet); }
+  sendAction(payload: unknown) { this.send({ type: 'command', seq: this.commandSeq++, payload }); }
   chat(text: string) {
     text = text.trim().slice(0, 160); const now = Date.now();
     if (!text || now - this.lastChat < 500 || !this.state.connected) return;
@@ -87,7 +97,17 @@ export class PeerRoom {
   }
   reconnect() {
     if (this.state.isHost) { this.guestId = ''; this.update({ notice: 'Đã mở lại vị trí khách. Đồng đội hãy kết nối lại cùng mã phòng.' }); }
-    else if (this.peer && !this.peer.destroyed) { this.connection?.close(); this.attach(this.peer.connect('echoes-v2-' + this.state.code, { reliable: true, serialization: 'json' })); }
+    else { this.connectAttempts = 0; this.connectGuest(); }
+  }
+  private connectGuest() {
+    if (this.disposed || this.state.isHost || !this.peer || this.peer.destroyed || this.state.connected) return;
+    clearTimeout(this.retryTimer);
+    this.connectAttempts += 1;
+    this.connection?.close();
+    this.update({ notice: `Đang kết nối tới chủ phòng · lần ${this.connectAttempts}/4…`, route: 'đang dò' });
+    this.attach(this.peer.connect('echoes-v2-' + this.state.code, { reliable: true, serialization: 'json', metadata: { version: 3, attempt: this.connectAttempts } }));
+    if (this.connectAttempts < 4) this.retryTimer = setTimeout(() => { if (!this.state.connected) this.connectGuest(); }, 7000 + this.connectAttempts * 2500);
+    else this.retryTimer = setTimeout(() => { if (!this.state.connected) this.update({ notice: 'Không tạo được tuyến WebRTC sau 4 lần. Hãy giữ chủ phòng mở, thử lại; mạng NAT nghiêm ngặt cần TURN relay.' }); }, 12000);
   }
   private receive(data: unknown) {
     if (!record(data) || typeof data.type !== 'string') return;
@@ -100,12 +120,20 @@ export class PeerRoom {
       this.lastReceivedChat = Date.now(); if (this.state.chat.some(c => c.id === data.id)) return;
       this.update({ chat: [...this.state.chat, { id: data.id, text: data.text.trim().slice(0, 160), role: this.role === 'hung' ? 'mei' as const : 'hung' as const }].slice(-50) }); return;
     }
-    const allowed = this.state.isHost ? 'input' : 'snapshot';
-    if (data.type === allowed && typeof data.seq === 'number' && Number.isSafeInteger(data.seq) && data.seq > this.lastSeq && this.state.started) {
-      if (allowed === 'input' && !parseControls(data.payload)) return;
-      this.lastSeq = data.seq;
-      for (const fn of this.gameListeners) fn({ type: allowed, seq: data.seq, payload: data.payload });
+    const allowed = this.state.isHost ? ['input', 'command'] : ['snapshot'];
+    if (allowed.includes(data.type) && typeof data.seq === 'number' && Number.isSafeInteger(data.seq) && data.seq > this.lastSeq[data.type as GamePacket['type']] && this.state.started) {
+      if (data.type === 'input' && !parseControls(data.payload)) return;
+      const type = data.type as GamePacket['type'];
+      this.lastSeq[type] = data.seq;
+      for (const fn of this.gameListeners) fn({ type, seq: data.seq, payload: data.payload });
     }
   }
-  close() { this.disposed = true; clearTimeout(this.timer); clearInterval(this.heartbeat); this.connection?.close(); this.peer?.destroy(); this.listeners.clear(); this.gameListeners.clear(); }
+  private async inspectRoute(connection: DataConnection) {
+    try {
+      const stats = await connection.peerConnection.getStats(); let relay = false;
+      stats.forEach(report => { if (report.type === 'candidate-pair' && report.state === 'succeeded') { const local = stats.get(report.localCandidateId); const remote = stats.get(report.remoteCandidateId); relay ||= local?.candidateType === 'relay' || remote?.candidateType === 'relay'; } });
+      this.update({ route: relay ? 'relay' : 'trực tiếp', notice: relay ? 'Đã kết nối ổn định qua máy chủ TURN relay.' : 'Đã kết nối trực tiếp bằng WebRTC.' });
+    } catch { this.update({ route: 'trực tiếp', notice: 'Hai người đã kết nối bằng WebRTC.' }); }
+  }
+  close() { this.disposed = true; clearTimeout(this.timer); clearTimeout(this.retryTimer); clearInterval(this.heartbeat); this.connection?.close(); this.peer?.destroy(); this.listeners.clear(); this.gameListeners.clear(); }
 }
