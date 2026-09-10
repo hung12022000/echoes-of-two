@@ -1,0 +1,13 @@
+import { useState } from "react";
+import { GameCanvas } from "../game/GameCanvas";
+import { statsFor, type Role } from "../game/rules";
+import { createLocalRoom, multiplayerConfigured } from "../multiplayer/roomService";
+import "../styles.css";
+
+type Screen = "menu" | "lobby" | "game";
+export function App() {
+  const [screen, setScreen] = useState<Screen>("menu"); const [role, setRole] = useState<Role>("hung"); const [roomCode, setRoomCode] = useState(""); const [notice, setNotice] = useState("");
+  const enterLobby = () => { const room = createLocalRoom(); setRoomCode(room.code); setScreen("lobby"); setNotice(multiplayerConfigured ? "Realtime ready — mời người chơi còn lại." : "Multiplayer chưa được cấu hình — đang chạy chế độ demo."); };
+  if (screen === "game") return <main className="game-shell"><GameCanvas role={role} /><div className="hud"><div><span className="eyebrow">ECHOES OF TWO</span><h1>Thành phố Trên Mây</h1><p>Mục tiêu: tìm ba Echo Shard và khôi phục Resonance Gate.</p></div><div className="stats"><span>HP {statsFor(role).maxHp}</span><span>LINK {statsFor(role).maxEnergy}</span><button onClick={() => setScreen("menu")}>Thoát</button></div></div><div className="objective">{role === "hung" ? "E · Chạm rune vật chất" : "E · Reveal rune năng lượng"}</div></main>;
+  return <main className="app-shell"><section className="hero"><div className="orb orb-a"/><div className="orb orb-b"/><span className="eyebrow">A VERTICAL SLICE CO-OP ADVENTURE</span><h1>Hưng <i>&</i> Mei.100</h1><h2>Echoes of Two</h2><p className="lead">Hai góc nhìn. Một lời giải. Một thành phố đang chờ được đánh thức.</p>{screen === "menu" ? <div className="actions"><button className="primary" onClick={enterLobby}>Bắt đầu hành trình</button><button onClick={() => setNotice("WASD di chuyển · Shift chạy · Space nhảy · E tương tác · Q kỹ năng")}>Điều khiển</button></div> : <div className="lobby-card"><span className="eyebrow">LOBBY · PHÒNG RIÊNG</span><div className="room-code">{roomCode}</div><p>{notice}</p><label>Vai của bạn<select value={role} onChange={(e) => setRole(e.target.value as Role)}><option value="hung">Hưng · Matter Vanguard</option><option value="mei">Mei.100 · Energy Weaver</option></select></label><div className="lobby-actions"><button className="primary" onClick={() => setScreen("game")}>Ready · Vào game demo</button><button onClick={() => { navigator.clipboard?.writeText(roomCode); setNotice("Đã copy mã phòng."); }}>Copy mã</button></div></div>}{notice && screen === "menu" && <p className="notice">{notice}</p>}</section><footer>Astra / 01 · Procedural preview · <span>Không cần tài khoản</span></footer></main>;
+}
