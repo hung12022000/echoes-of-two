@@ -20,8 +20,8 @@
 
 Final status is reported by the [GitHub Actions run](https://github.com/hung12022000/echoes-of-two/actions) for the published commit; this local checklist is not a claim of deployment success.
 
-- [x] GitHub Actions production build and Pages deployment successful — [run 34496691018](https://github.com/hung12022000/echoes-of-two/actions/runs/34496691018), feature commit 6b92f70
-- [x] Live Pages URL serves and renders the new scene; live two-context room/chat/movement/boss/guest-rejoin QA passed
+- [x] GitHub Actions production build and Pages deployment successful — [run 34623973021](https://github.com/hung12022000/echoes-of-two/actions/runs/34623973021), release commit `8cef343`
+- [x] Live Pages URL returns HTTP 200 and renders the release scene; live two-context room/chat/craft/movement/ROOM_FULL/boss/disconnect/reconnect QA passed
 
 ## Not certified in this slice
 
