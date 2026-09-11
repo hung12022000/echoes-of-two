@@ -1,16 +1,20 @@
 # Release checklist — coastal vertical slice
 
-## Local verification completed on 2026-09-10
+## Local verification completed on 2026-09-11
 
 - [x] npm ci
 - [x] npm run typecheck
-- [x] npm run test:run — 21 tests
+- [x] npm run test:run — 47 tests
 - [x] npm run build
 - [x] npm run verify:dist (GLB integrity/rig/animations, required textures, credits, asset budgets and Pages base)
 - [x] npm run test:e2e (offline gameplay, mobile menu, failed asset/retry)
-- [x] Real WebRTC two-context QA: create/join/ready/start/chat/movement/ROOM_FULL/boss synchronization
-- [x] Guest tab closed and reopened; host retained and guest restored the ongoing boss state
-- [x] Inspect landing, coast/Hòn Trống Mái, portraits and combat screenshots
+- [x] Real WebRTC two-context QA: create/join/ready/start/chat/craft/movement/ROOM_FULL/boss synchronization
+- [x] Simulated heartbeat disconnect/reconnect; host retained and guest restored the ongoing boss state
+- [x] Inspect landing, Hòn Trống Mái, bare starter raft, first-person hook/hammer, map, third-person and combat screenshots at 1440×900
+- [x] Shark raid logic: warning, spear repel, timed bite loss, raft-module/item destruction and save/network normalization covered by unit tests
+- [x] Natural shark visual QA: warning approach and bite screenshots captured without a production shortcut; no page/console errors
+- [x] Water exclusion: actor cannot walk off the starter raft or living raft foundations; island traversal is limited to terrain above sea level
+- [x] Final-build soak: 3602 seconds, 341 movement/state samples, no crash, page error, non-finite state or out-of-bounds escape
 
 ## Publishing gates
 
@@ -23,5 +27,5 @@ Final status is reported by the [GitHub Actions run](https://github.com/hung1202
 
 - [ ] Two physical computers on separate networks / strict NAT and TURN
 - [ ] 60 FPS Medium / 30 FPS Low on representative consumer hardware
-- [ ] Long play sessions and host-loss recovery
+- [ ] Host-loss migration to a new authoritative player
 - [ ] Full original puzzles, regular enemies, original boss patterns and M0–M7 acceptance

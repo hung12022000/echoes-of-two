@@ -1,22 +1,22 @@
 export type ItemCategory = 'resource' | 'material' | 'tool' | 'food' | 'medicine' | 'seed' | 'key' | 'machine' | 'building';
 
-export interface CropData { id: string; name: string; icon: string; size: 'small' | 'large'; growSeconds: number; harvests: number; produceName: string; }
+export interface CropData { id: string; name: string; icon: string; size: 'small' | 'large'; stageSeconds: 30; harvests: number; produceName: string; produceCategory: 'food' | 'material'; }
 export const CROPS: CropData[] = [
-  { id: 'water_spinach', name: 'Rau muống', icon: '🥬', size: 'small', growSeconds: 55, harvests: 2, produceName: 'Rau muống tươi' },
-  { id: 'tomato', name: 'Cà chua', icon: '🍅', size: 'small', growSeconds: 70, harvests: 3, produceName: 'Cà chua' },
-  { id: 'chili', name: 'Ớt', icon: '🌶️', size: 'small', growSeconds: 75, harvests: 3, produceName: 'Ớt chín' },
-  { id: 'sweet_potato', name: 'Khoai lang', icon: '🍠', size: 'small', growSeconds: 85, harvests: 1, produceName: 'Khoai lang' },
-  { id: 'pineapple', name: 'Dứa', icon: '🍍', size: 'small', growSeconds: 95, harvests: 1, produceName: 'Dứa chín' },
-  { id: 'banana', name: 'Chuối', icon: '🍌', size: 'large', growSeconds: 120, harvests: 4, produceName: 'Nải chuối' },
-  { id: 'coconut_tree', name: 'Dừa', icon: '🥥', size: 'large', growSeconds: 150, harvests: 5, produceName: 'Dừa' },
-  { id: 'mango', name: 'Xoài', icon: '🥭', size: 'large', growSeconds: 145, harvests: 4, produceName: 'Xoài chín' },
-  { id: 'papaya', name: 'Đu đủ', icon: '🟠', size: 'large', growSeconds: 130, harvests: 4, produceName: 'Đu đủ' },
-  { id: 'guava', name: 'Ổi', icon: '🟢', size: 'large', growSeconds: 140, harvests: 4, produceName: 'Ổi' },
-  { id: 'jackfruit', name: 'Mít', icon: '🌳', size: 'large', growSeconds: 180, harvests: 3, produceName: 'Múi mít' },
-  { id: 'dragonfruit', name: 'Thanh long', icon: '🐉', size: 'large', growSeconds: 155, harvests: 3, produceName: 'Thanh long' },
-  { id: 'lime', name: 'Chanh', icon: '🍋', size: 'large', growSeconds: 125, harvests: 5, produceName: 'Chanh' },
-  { id: 'orange', name: 'Cam', icon: '🍊', size: 'large', growSeconds: 150, harvests: 4, produceName: 'Cam' },
-  { id: 'starfruit', name: 'Khế', icon: '⭐', size: 'large', growSeconds: 135, harvests: 4, produceName: 'Khế' },
+  { id: 'water_spinach', name: 'Rau muống', icon: '🥬', size: 'small', stageSeconds: 30, harvests: 2, produceName: 'Rau muống tươi', produceCategory: 'food' },
+  { id: 'tomato', name: 'Cà chua', icon: '🍅', size: 'small', stageSeconds: 30, harvests: 3, produceName: 'Cà chua', produceCategory: 'food' },
+  { id: 'pineapple', name: 'Dứa', icon: '🍍', size: 'small', stageSeconds: 30, harvests: 2, produceName: 'Dứa chín', produceCategory: 'food' },
+  { id: 'rose', name: 'Hoa hồng', icon: '🌹', size: 'small', stageSeconds: 30, harvests: 3, produceName: 'Hoa hồng', produceCategory: 'material' },
+  { id: 'lotus', name: 'Hoa sen', icon: '🪷', size: 'small', stageSeconds: 30, harvests: 3, produceName: 'Hoa sen', produceCategory: 'material' },
+  { id: 'banana', name: 'Chuối', icon: '🍌', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Nải chuối', produceCategory: 'food' },
+  { id: 'coconut_tree', name: 'Dừa', icon: '🥥', size: 'large', stageSeconds: 30, harvests: 5, produceName: 'Dừa', produceCategory: 'food' },
+  { id: 'mango', name: 'Xoài', icon: '🥭', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Xoài chín', produceCategory: 'food' },
+  { id: 'papaya', name: 'Đu đủ', icon: '🟠', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Đu đủ', produceCategory: 'food' },
+  { id: 'guava', name: 'Ổi', icon: '🟢', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Ổi', produceCategory: 'food' },
+  { id: 'jackfruit', name: 'Mít', icon: '🌳', size: 'large', stageSeconds: 30, harvests: 3, produceName: 'Múi mít', produceCategory: 'food' },
+  { id: 'dragonfruit', name: 'Thanh long', icon: '🐉', size: 'large', stageSeconds: 30, harvests: 3, produceName: 'Thanh long', produceCategory: 'food' },
+  { id: 'lime', name: 'Chanh', icon: '🍋', size: 'large', stageSeconds: 30, harvests: 5, produceName: 'Chanh', produceCategory: 'food' },
+  { id: 'orange', name: 'Cam', icon: '🍊', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Cam', produceCategory: 'food' },
+  { id: 'starfruit', name: 'Khế', icon: '⭐', size: 'large', stageSeconds: 30, harvests: 4, produceName: 'Khế', produceCategory: 'food' },
 ];
 
 export interface ItemData {
@@ -36,6 +36,7 @@ export interface RecipeData {
   inputs: Record<string, number>;
   output: { item: string; amount: number };
   description: string;
+  craftSeconds: number;
 }
 
 const item = (id: string, name: string, icon: string, category: ItemCategory, tier: number, description: string): ItemData => ({ id, name, icon, category, tier, description });
@@ -67,7 +68,10 @@ const ITEM_LIST: ItemData[] = [
   item('hook', 'Móc thu gom', '🪝', 'tool', 1, 'Tăng hiệu quả thu gom vật trôi.'),
   item('spear', 'Lao sinh tồn', '🔱', 'tool', 1, 'Tự vệ trước sinh vật biển.'),
   item('hammer', 'Búa kiến trúc', '🔨', 'tool', 1, 'Mở khóa các kết cấu kiên cố và sửa bè.'),
+  item('shovel', 'Xẻng trồng cây', '🪏', 'tool', 1, 'Đào đất trong luống và bồn cây trước khi gieo hạt.'),
+  item('watering_can', 'Xô tưới nước', '🪣', 'tool', 1, 'Mang nước sạch tới cây trồng trên bè và căn cứ đảo.'),
   item('diving_mask', 'Kính lặn', '🥽', 'tool', 2, 'Cho phép tìm vật liệu hiếm dưới rạn san hô.'),
+  item('navigation_compass', 'La bàn hoa tiêu', '🧭', 'tool', 3, 'Hoa hồng, sen và dừa cân bằng kim từ; mở chỉ dẫn hải trình chính xác.'),
   item('foundation', 'Sàn móng', '▦', 'building', 1, 'Móng gỗ cho bè hoặc căn nhà.'),
   item('wall', 'Tường gỗ', '▥', 'building', 1, 'Tạo khu trú ẩn chống gió.'),
   item('door', 'Khung cửa', '🚪', 'building', 1, 'Lối vào cho nhà trên đảo.'),
@@ -87,13 +91,13 @@ const ITEM_LIST: ItemData[] = [
   item('rain_collector', 'Máy hứng nước mưa', '🌧️', 'machine', 2, 'Tưới cây và bổ sung nước khi trời mưa.'),
   ...CROPS.flatMap(crop => [
     item(`seed_${crop.id}`, `Hạt ${crop.name}`, crop.icon, 'seed', crop.size === 'small' ? 1 : 2, `Trồng trong ${crop.size === 'small' ? 'luống nhỏ' : 'bồn cây lớn'}; cần nước sạch.`),
-    item(`produce_${crop.id}`, crop.produceName, crop.icon, 'food', crop.size === 'small' ? 1 : 2, `Nông sản thu hoạch từ ${crop.name}.`),
+    item(`produce_${crop.id}`, crop.produceName, crop.icon, crop.produceCategory, crop.size === 'small' ? 1 : 2, `Sản phẩm thu hoạch từ ${crop.name}; dùng trực tiếp hoặc làm nguyên liệu.`),
   ]),
 ];
 
 export const ITEMS: Record<string, ItemData> = Object.fromEntries(ITEM_LIST.map(entry => [entry.id, entry]));
 
-export const RECIPES: RecipeData[] = [
+const BASE_RECIPES: Omit<RecipeData, 'craftSeconds'>[] = [
   { id: 'rope', name: 'Bện dây thừng', icon: '🪢', category: 'survival', inputs: { fiber: 3 }, output: { item: 'rope', amount: 1 }, description: 'Nguyên liệu cơ bản cho công cụ và kiến trúc.' },
   { id: 'plank', name: 'Xẻ ván gỗ', icon: '▤', category: 'survival', inputs: { driftwood: 2 }, output: { item: 'plank', amount: 1 }, description: 'Bước xử lý đầu tiên của chuỗi xây dựng.' },
   { id: 'charcoal', name: 'Đốt than củi', icon: '◼', category: 'survival', inputs: { driftwood: 2, stone: 1 }, output: { item: 'charcoal', amount: 1 }, description: 'Nhiên liệu cho bếp và lõi lọc.' },
@@ -102,12 +106,15 @@ export const RECIPES: RecipeData[] = [
   { id: 'hook', name: 'Móc thu gom', icon: '🪝', category: 'tool', inputs: { scrap: 1, rope: 2, plank: 1 }, output: { item: 'hook', amount: 1 }, description: 'Mỗi lần nhặt nhận thêm một tài nguyên.' },
   { id: 'spear', name: 'Lao sinh tồn', icon: '🔱', category: 'tool', inputs: { plank: 2, rope: 1, scrap: 1 }, output: { item: 'spear', amount: 1 }, description: 'Giảm nguy cơ bị cá mập tấn công.' },
   { id: 'hammer', name: 'Búa kiến trúc', icon: '🔨', category: 'tool', inputs: { plank: 2, scrap: 2, rope: 1 }, output: { item: 'hammer', amount: 1 }, description: 'Công cụ nền tảng cho kiến trúc cấp cao.' },
+  { id: 'shovel', name: 'Xẻng trồng cây', icon: '🪏', category: 'tool', inputs: { plank: 1, scrap: 2, rope: 1 }, output: { item: 'shovel', amount: 1 }, description: 'Bắt buộc để đào đất và gieo mọi giống cây.' },
+  { id: 'watering_can', name: 'Xô tưới nước', icon: '🪣', category: 'tool', inputs: { plastic: 3, scrap: 1, rope: 1 }, output: { item: 'watering_can', amount: 1 }, description: 'Bắt buộc để dùng Nước sạch tưới cây.' },
   { id: 'sailcloth', name: 'Dệt vải buồm', icon: '◫', category: 'survival', inputs: { fiber: 4, plastic: 2 }, output: { item: 'sailcloth', amount: 1 }, description: 'Mắt xích giữa vật trôi và hệ thống di chuyển bè.' },
   { id: 'brick', name: 'Nung gạch', icon: '🧱', category: 'survival', inputs: { clay: 2, charcoal: 1 }, output: { item: 'brick', amount: 2 }, description: 'Dùng cho tháp và công trình chống bão.' },
   { id: 'glass', name: 'Nấu kính biển', icon: '◇', category: 'survival', inputs: { shell: 2, charcoal: 1 }, output: { item: 'glass', amount: 1 }, description: 'Thành phần quang học cho thám hiểm.' },
   { id: 'medicine', name: 'Pha thuốc thảo dược', icon: '🧪', category: 'survival', inputs: { herb: 2, seaweed: 1, fresh_water: 1 }, output: { item: 'medicine', amount: 1 }, description: 'Mang theo trước khi đối đầu quái vật đảo.' },
   { id: 'rescue_kit', name: 'Bộ cứu hộ đồng đội', icon: '🛟', category: 'survival', inputs: { rope: 2, sailcloth: 1, medicine: 1 }, output: { item: 'rescue_kit', amount: 1 }, description: 'Bắt buộc để hồi sinh khi chỉ còn một người đứng vững.' },
   { id: 'diving_mask', name: 'Kính lặn rạn ngọc', icon: '🥽', category: 'tool', inputs: { glass: 2, plastic: 2, rope: 1 }, output: { item: 'diving_mask', amount: 1 }, description: 'Mở chuỗi tài nguyên dưới biển.' },
+  { id: 'navigation_compass', name: 'La bàn hoa tiêu', icon: '🧭', category: 'tool', inputs: { produce_rose: 10, produce_lotus: 5, produce_coconut_tree: 3, glass: 2, scrap: 2 }, output: { item: 'navigation_compass', amount: 1 }, description: 'Chuỗi nông nghiệp–thám hiểm cấp cao để định vị đảo và tín hiệu cứu hộ.' },
   { id: 'foundation', name: 'Sàn móng', icon: '▦', category: 'building', inputs: { plank: 2, rope: 1 }, output: { item: 'foundation', amount: 1 }, description: 'Đặt bằng B tại vị trí nhân vật.' },
   { id: 'wall', name: 'Tường gỗ', icon: '▥', category: 'building', inputs: { plank: 2, fiber: 2 }, output: { item: 'wall', amount: 1 }, description: 'Tăng độ kín và cấp phát triển đảo.' },
   { id: 'door', name: 'Khung cửa', icon: '🚪', category: 'building', inputs: { plank: 2, rope: 1 }, output: { item: 'door', amount: 1 }, description: 'Hoàn thiện lối vào căn nhà.' },
@@ -127,10 +134,19 @@ export const RECIPES: RecipeData[] = [
   { id: 'rain_collector', name: 'Máy hứng nước mưa', icon: '🌧️', category: 'building', inputs: { plastic: 5, sailcloth: 1, rope: 2 }, output: { item: 'rain_collector', amount: 1 }, description: 'Tự bổ sung nước tưới khi mưa hoặc giông.' },
 ];
 
+export const RECIPES: RecipeData[] = BASE_RECIPES.map(recipe => ({
+  ...recipe,
+  craftSeconds: Math.min(10, 5 + (ITEMS[recipe.output.item]?.tier ?? 0) + (recipe.category === 'defense' ? 2 : recipe.category === 'building' ? 1 : 0)),
+}));
+
 export const BUILDABLES = RECIPES.filter(recipe => recipe.category === 'building' || recipe.category === 'defense').map(recipe => recipe.output.item);
 
 export const itemName = (id: string) => ITEMS[id]?.name ?? id;
 
 export function formatCost(inputs: Record<string, number>, inventory: Record<string, number>) {
   return Object.entries(inputs).map(([id, amount]) => `${itemName(id)} ${inventory[id] ?? 0}/${amount}`).join(' · ');
+}
+
+export function formatIngredients(inputs: Record<string, number>) {
+  return Object.entries(inputs).map(([id, amount]) => `${itemName(id)} ×${amount}`).join(' + ');
 }

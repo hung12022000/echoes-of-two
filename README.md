@@ -7,21 +7,21 @@ Vertical slice 3D survival-crafting trên biển: bắt đầu trên một bè n
 ## Vòng lặp Oceanbound hiện có
 
 1. Bắt đầu trên bè nhỏ; dùng móc sẵn có và nhấn **F** gần vật trôi/tài nguyên.
-2. Nhấn **C** để dùng 31 công thức xử lý nguyên liệu, chế tạo công cụ, thức ăn, máy và bộ phận nhà.
+2. Nhấn **C** để dùng 34 công thức xử lý nguyên liệu, chế tạo công cụ, thức ăn, máy, la bàn và bộ phận nhà. Mỗi món cần 5–10 giây và có hiệu ứng/âm thanh chế tạo.
 3. Nhấn **N** chọn công trình; nhấn **B** để đặt trước mặt hoặc dùng nút đặt trong sổ tay.
 4. Nhấn **M** để mở hải đồ, tạo marker có loại/tên/ghi chú và chọn waypoint.
-5. Nhấn **G** để trồng 5 cây nhỏ và 10 cây lớn; từng cây có nước, tiến độ lớn và số lượt thu hoạch riêng.
+5. Nhấn **G** để trồng 5 cây nhỏ và 10 cây lớn; mỗi cây qua ba giai đoạn 30 giây, chỉ lớn khi đủ nước và cho nông sản liên kết ngược vào công thức.
 6. Theo dõi sinh lực, đói, khát, thể lực, nhiệt độ, độ ướt, ngày–đêm, dự báo và mức đe dọa.
 7. Xây neo/cột thu lôi, máy lọc, bếp, kho, máy hứng mưa, động cơ, tháp canh và căn nhà; lấy ba chìa khóa qua ba đảo để mở cảnh kết máy bay về Hạ Long.
 
-Save cục bộ tự động mỗi 15 giây và có nút **Lưu**. Trong phòng online, host nắm world state; crafting, xây dựng và marker do khách thực hiện được gửi lên host rồi đồng bộ lại.
+Save cục bộ tự động mỗi 15 giây và có nút **Lưu**. Mỗi mã phòng có ô lưu riêng; chủ phòng có thể tiếp tục một mình và chờ đồng đội vào lại. Trong phòng online, host nắm world state; crafting, xây dựng và marker do khách thực hiện được gửi lên host rồi đồng bộ lại.
 
 ## Chơi cùng nhau
 
 1. Người thứ nhất chọn **Tạo phòng hai người**, gửi link mời hoặc mã 6 ký tự.
 2. Người thứ hai mở link, chọn **Vào phòng**. Cả hai bấm **Tôi đã sẵn sàng**.
-3. Chủ phòng bấm **Bắt đầu cùng nhau**. Hưng là chủ phòng, Mei.100 là khách.
-4. Giữ tab chủ phòng mở. Chat trong game để trao đổi. Khi mất kết nối, trận đấu dừng; khách có thể kết nối lại.
+3. Chủ phòng bấm **Bắt đầu cùng nhau**; hoặc **Tiếp tục phòng một mình** rồi để Mei.100 vào sau. Hưng là chủ phòng, Mei.100 là khách.
+4. Giữ tab chủ phòng mở. Chat trong game để trao đổi. Khi mất kết nối, chủ phòng vẫn chơi được và khách có thể kết nối lại vào trạng thái đang chạy.
 
 WebRTC dùng PeerJS Cloud cho báo hiệu, nhiều STUN endpoint và cơ chế tự thử lại bốn lần. Không cần tài khoản hoặc Supabase. Mạng NAT nghiêm ngặt vẫn cần TURN; giao diện cho biết tuyến đang dùng là trực tiếp hay relay. Chỉ gửi mã cho người tin cậy; kết nối trực tiếp có thể trao đổi địa chỉ mạng.
 
@@ -39,9 +39,9 @@ VITE_TURN_CREDENTIAL=...
 
 ## Điều khiển
 
-WASD di chuyển · Shift chạy · Space nhảy · F dùng móc/thu gom · C chế tạo · I túi đồ · G nông trại · N xây dựng · B đặt · M hải đồ · X né · J/chuột trái đánh · Q kỹ năng · giữ E phối hợp/hồi sinh · chuột kéo nhìn · V đổi góc nhìn thứ nhất/thứ ba · Esc tạm dừng. Tab đổi vai chỉ trong luyện tập. K đến đấu trường, R chơi lại: chỉ chủ phòng hoặc chơi offline.
+WASD hoặc bốn phím/nút mũi tên di chuyển · Shift chạy · Space nhảy · 1–6 đổi công cụ · F dùng món đang cầm · C chế tạo · I túi đồ · G nông trại · N xây dựng · B đặt bằng búa · M hải đồ · X né · J/chuột trái đánh · Q kỹ năng đảo · giữ E phối hợp/hồi sinh · kéo chuột quay chậm 360° · V đổi góc nhìn thứ nhất/thứ ba · Esc tạm dừng. Tab đổi vai và R chơi lại chỉ dùng trong luyện tập/offline.
 
-Khám phá bãi biển hoặc B đến cổ môn. Mei tích 5 dấu năng lượng; Hưng Q trong tầm gần để phá giáp. Cả hai đứng gần và giữ E để hồi phục/tích cộng hưởng; đủ 100% tạo Echo Burst trong trận. Né hoặc nhảy khỏi sóng chấn động của Warden.
+Trên đảo, khám phá bãi biển hoặc đi đến cổ môn. Khi còn ở biển, nhân vật bị giữ trên bè và các module sàn đã xây, không thể bước xuống nước. Mei tích 5 dấu năng lượng; Hưng Q trong tầm gần để phá giáp. Cả hai đứng gần và giữ E để hồi phục/tích cộng hưởng; đủ 100% tạo Echo Burst trong trận. Né hoặc nhảy khỏi sóng chấn động của Warden.
 
 ## Chạy và kiểm tra
 
@@ -61,12 +61,14 @@ npm run test:run
 npm run build
 npm run verify:dist
 npm run test:e2e
+npm run test:shark-visual
+npm run test:soak
 ```
 
-Kiểm tra WebRTC thực với hai browser contexts: chạy preview trên 4173 rồi đặt QA_URL=http://127.0.0.1:4173/echoes-of-two/ và chạy node scripts/online-qa.mjs. Phụ thuộc mạng và PeerJS Cloud. Không tương đương thử trên hai máy/mạng khác nhau.
+Kiểm tra WebRTC thực với hai browser contexts: chạy preview trên 4173 rồi đặt QA_URL=http://127.0.0.1:4173/echoes-of-two/ và chạy node scripts/online-qa.mjs. `npm run test:soak` chạy mặc định 3600 giây để phát hiện crash, trạng thái không hữu hạn hoặc người chơi lọt khỏi biên. Các bài này vẫn không thay thế thử trên hai máy/mạng vật lý khác nhau.
 
 ## Deploy
 
 Workflow .github/workflows/deploy-pages.yml trên main chạy npm ci, typecheck, unit tests, chuẩn bị assets được cache, build, verify:dist và Playwright trước khi deploy Pages. Pages source phải là GitHub Actions. Base path /echoes-of-two/.
 
-Xem [tầm nhìn tổng hợp mới nhất](docs/OCEANBOUND_MASTER_VISION_VI.md), [tình trạng thực tế](IMPLEMENTATION_STATUS.md), [roadmap Oceanbound](OCEANBOUND_EXPANSION.md), [giới hạn](KNOWN_ISSUES.md), [nguồn tài nguyên](ASSET_ATTRIBUTION.md), [đặc tả co-op gốc](GAME_SPEC.md) và [Master Design Oceanbound](docs/Oceanbound_Game_Design_Master.md).
+Xem [tầm nhìn tổng hợp mới nhất](docs/OCEANBOUND_MASTER_VISION_VI.md), [ghi chú tham khảo gameplay/VFX](docs/VFX_WEATHER_REFERENCE_VI.md), [quy trình Blender/Blendkit](docs/BLENDER_ASSET_PIPELINE_VI.md), [tình trạng thực tế](IMPLEMENTATION_STATUS.md), [roadmap Oceanbound](OCEANBOUND_EXPANSION.md), [giới hạn](KNOWN_ISSUES.md), [nguồn tài nguyên](ASSET_ATTRIBUTION.md), [đặc tả co-op gốc](GAME_SPEC.md) và [Master Design Oceanbound](docs/Oceanbound_Game_Design_Master.md).

@@ -5,25 +5,28 @@ This is a playable coastal co-op vertical slice, not acceptance-complete M0–M7
 ## Implemented in this revision
 
 - Oceanbound playable loop layered onto the existing coastal game without replacing Hưng or Mei.100.
-- Data-driven catalog with 74 item definitions, 31 recipes and a linked in-game crafting guide across survival, tools, farming, building and storm defense.
+- Data-driven catalog with 77 item definitions, 34 timed recipes and a linked in-game crafting guide across survival, tools, farming, building, navigation and storm/shark defense.
+- Equipped-tool workflow for hook, hammer, spear, shovel and watering can, with first-person procedural models/animations, numbered quick select, tool-gated actions and contextual sound.
+- Deterministic shark raids with advance warning, visible approach/wake/bite debris, spear defense, raft-module loss and save/network persistence.
 - Gatherable world resources with respawn, hook collection bonus and chain crafting from raw resources to materials, devices and structures.
 - Survival simulation for health, hunger, thirst, stamina, temperature and wetness; warnings, consumables, rescue-kit revival and a 25% inventory/storage loss when the whole party falls.
 - Animated vertex-displaced ocean, small bobbing starter raft, hook-assisted floating salvage, visible reef shark, day/night lighting and seven weather states including rain, thunder, tropical storm and anomalous snow.
+- Walkable-surface constraints keep both players on the starter raft or living raft-foundation modules while at sea, and on dry terrain while exploring islands; ocean water is not a traversable surface.
 - Grid-quantized placement and rendered 3D pieces for raft foundations, walls, doors, roofs, storage, purifier, grill, rain collector, planters, sail, engine, watchtower, claim beacon, storm anchor and lightning rod.
-- Farming lifecycle for five small crops and ten fruit trees, each with its own growth duration, watering state and harvest count.
+- Farming lifecycle for five small crops and ten fruit trees: seed, medium and mature stages each take 30 seconds and advance only while watered; flowers/fruit become crafting inputs.
 - Three-island campaign with building objectives, monster encounters, three persistent keys, increasingly harsh raft challenge legs and a rescue-plane ending at Hạ Long.
-- Persistent island development, autosave, map markers with notes/types, selectable waypoint and a reusable save schema.
-- Host-authoritative synchronization for survival crafting/build/marker commands and world snapshots.
+- Persistent island development, autosave, map markers with notes/types, selectable waypoint, resumable craft jobs and isolated save slots for solo or each room code.
+- Host-authoritative synchronization for survival crafting/build/marker commands and world snapshots; hosts can continue a room solo while waiting for a guest to rejoin.
 - WebRTC now uses multiple STUN endpoints, four automatic connection attempts, optional production TURN configuration and direct/relay diagnostics.
 
 - Bright responsive landing page with an AI-created Vietnamese coast illustration.
 - Explorable coastal island (approximately 134 × 124 m movement bounds), forest, textured sand/rock, animated sea and original procedural Hòn Trống Mái.
 - Two licensed human GLBs: fitted coral-pink Oceanbound clothing texture, an exact `Hưng&Mei` chest mark, Mei.100's small left-forearm sun tattoo, skin textures, rigs and six motion clips each.
 - First-person camera by default with a V-toggle third-person view; the local body is hidden only in first person while the co-op partner remains visible.
-- Camera-relative walk/run/jump/dodge, animation blending, additive combat poses, damage/cooldowns, guard, revival, restart and offline AI.
+- Camera-relative walk/run/jump/dodge with WASD or arrow controls, a slow unrestricted 360-degree mouse camera, first-person hands/hook, animation blending, additive combat poses, damage/cooldowns, guard, revival, restart and offline AI.
 - Warden encounter: energy marks, armor exposure, three HP phases, telegraphed ground slam, victory/defeat and pooled VFX.
 - Actual two-person PeerJS/WebRTC room, invitation link, ready gate, host-authoritative simulation, transform/combat snapshots, chat, third-player rejection and reconnect control.
-- Graphics presets, reduced environmental motion, sound mute, error/retry UI, lazy-loaded 3D engine.
+- Detailed procedural salvage silhouettes, lashed/logged starter raft, seagull flock/perching, contextual synthesized soundscape, adaptive graphics scaling, reduced environmental motion, sound mute, error/retry UI and lazy-loaded 3D engine.
 - Reproducible Blender/texture asset pipeline with pinned source commit and texture checksums.
 
 ## Original milestone audit
@@ -39,7 +42,7 @@ This is a playable coastal co-op vertical slice, not acceptance-complete M0–M7
 
 ## Verification evidence
 
-The unit suite exercises movement, jump edges, bounds, cooldowns/range, marks/exposure, two-player consent for E, rescue and wipe rules, crop growth/harvest, raft travel, all boss phases through actual attacks, snapshot validation and prior serialization/rules.
+The unit suite exercises movement, jump edges, bounds, building collision, cooldowns/range, marks/exposure, two-player consent for E, rescue and wipe rules, exact crop stages/harvest, timed crafting/reload, per-room save isolation, raft travel, all boss phases through actual attacks, snapshot validation and prior serialization/rules.
 
 Browser automation exercises actual GLB loading and rendering, survival crafting/building/map marker flow, offline movement/jump/link/boss/restart, invalid room input/mobile layout and missing-asset recovery. Separate online QA uses two isolated Chromium contexts and the real public signaling service to check room joining, ready/start, chat, host-authoritative crafting, synchronized movement/boss state and restoration after closing/reopening the guest tab. The optional third-client rejection stress check is available with `QA_THIRD=1`. Run WebGL suites sequentially: parallel software-rendered browsers can overwhelm the test computer and trigger connection timeouts.
 

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('landing, real GLBs, movement, jump, cooperation, boss and restart', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('echoes.qa.shortcuts', '1'));
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if(message.type()==='error') errors.push(message.text()); });
@@ -23,6 +24,13 @@ test('landing, real GLBs, movement, jump, cooperation, boss and restart', async 
   await page.keyboard.down('w');
   await expect.poll(async () => Number(await state.getAttribute('data-z'))).toBeGreaterThan(startZ + 1);
   await page.keyboard.up('w');
+  await page.keyboard.down('w');
+  await page.waitForTimeout(2500);
+  await page.keyboard.up('w');
+  expect(Number(await state.getAttribute('data-z'))).toBeLessThanOrEqual(83.1);
+  const arrowStart = { x: Number(await state.getAttribute('data-x')), z: Number(await state.getAttribute('data-z')) };
+  await page.getByRole('button', { name: 'Sang phải' }).hover(); await page.mouse.down(); await page.waitForTimeout(550); await page.mouse.up();
+  await expect.poll(async () => Math.hypot(Number(await state.getAttribute('data-x')) - arrowStart.x, Number(await state.getAttribute('data-z')) - arrowStart.z)).toBeGreaterThan(.4);
   await page.keyboard.press('Space');
   await expect.poll(async () => Number(await state.getAttribute('data-y')), { intervals: [50,100,100] }).toBeGreaterThan(0.2);
   await expect(state).toHaveAttribute('data-y', '0.00');
@@ -51,12 +59,17 @@ test('survival crafting, island building and persistent map marker work from the
   await expect(page.getByTestId('game-state')).toHaveAttribute('data-status', 'explore', { timeout: 90000 });
   await page.keyboard.press('c');
   const dialog = page.getByRole('dialog', { name: 'Sổ tay sinh tồn' });
-  const craft = async (name: string) => dialog.locator('article').filter({ hasText: name }).getByRole('button', { name: 'Chế tạo' }).click();
+  const craft = async (name: string) => {
+    await dialog.locator('article').filter({ hasText: name }).getByRole('button', { name: 'Chế tạo' }).click();
+    await expect(page.locator('.crafting-status')).toContainText(name);
+    await expect(page.locator('.crafting-status')).toBeHidden({ timeout: 12000 });
+  };
   await craft('Xẻ ván gỗ'); await craft('Xẻ ván gỗ'); await craft('Bện dây thừng'); await craft('Sàn móng');
   await page.getByLabel('Đóng sổ tay').click();
   await page.keyboard.press('n');
   await dialog.getByRole('button', { name: /Sàn móng/ }).click();
-  await dialog.getByRole('button', { name: 'Đặt tại vị trí hiện tại' }).click();
+  await expect(page.getByTestId('game-state')).toHaveAttribute('data-tool', 'hammer');
+  await dialog.getByRole('button', { name: /Đóng bằng búa tại vị trí hiện tại/ }).click();
   await expect(page.getByText(/Đã xây.*Sàn móng/)).toBeVisible();
   await page.keyboard.press('m');
   await dialog.getByLabel('Tên').fill('Trại thử nghiệm');
@@ -80,6 +93,18 @@ test('invalid room code is rejected and mobile menu does not overflow', async ({
   await page.setViewportSize({width:920,height:1250});
   await expect(page.locator('.hero-photo')).toHaveCSS('background-position', /85% 50%/);
   await page.screenshot({path:'artifacts/portrait-menu.png'});
+});
+
+test('a room can continue solo and keeps an isolated save slot', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: /Tạo phòng hai người/ }).click();
+  const code = await page.getByTestId('room-code').textContent();
+  expect(code).toMatch(/^[A-Z0-9]{6}$/);
+  await page.getByRole('button', { name: 'Tiếp tục phòng một mình' }).click();
+  await expect(page.getByTestId('game-state')).toHaveAttribute('data-status', 'explore', { timeout: 90000 });
+  await page.getByRole('button', { name: /Lưu/ }).click();
+  const roomSave = await page.evaluate(roomCode => localStorage.getItem(`echoes.oceanbound.save.v4.room.${roomCode}`), code);
+  expect(roomSave).toContain('"version":4');
 });
 
 test('asset failure is visible and retry loads a playable scene', async ({ page }) => {

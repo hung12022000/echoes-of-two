@@ -11,7 +11,9 @@
     "build": "vite build",
     "verify:dist": "node scripts/verify-dist.mjs",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:soak": "node scripts/soak-qa.mjs",
+    "test:shark-visual": "node scripts/shark-visual-qa.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^8.31.0",

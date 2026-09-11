@@ -32,7 +32,8 @@ export class Encounter {
   telegraph = 0;
   attackTimer = 3;
   elapsed = 0;
-  message = 'Hòn Trống Mái phía trước · Khám phá bờ biển cùng nhau. K: đến đấu trường. Giữ E gần đồng đội để cộng hưởng.';
+  skillTier = 0;
+  message = 'Hòn Trống Mái phía trước · Mở rộng bè, chuẩn bị công cụ rồi cùng khám phá bờ biển. Giữ E gần đồng đội để cộng hưởng.';
   effects: CombatEffect[] = [];
   private aiCooldown = 0;
   private jumpBuffer = 0;
@@ -64,12 +65,12 @@ export class Encounter {
     this.startBattle();
     a.yaw = Math.atan2(bossPosition.x - a.x, bossPosition.z - a.z);
     a.motion = skill ? 'skill' : 'attack'; a.action = skill ? 0.85 : 0.5; a.cooldown = skill ? 0.9 : 0.5;
-    if (skill) a.skillCooldown = 7;
+    if (skill) a.skillCooldown = Math.max(4.8, 7 - this.skillTier * .65);
     this.emit(a.role === 'mei' ? 'bolt' : skill ? 'pulse' : 'strike', a, a.role);
-    if (a.role === 'mei') { this.marks = Math.min(5, this.marks + (skill ? 3 : 1)); this.hitBoss(skill ? 30 : 12, a); }
+    if (a.role === 'mei') { this.marks = Math.min(5, this.marks + (skill ? Math.min(5, 3 + this.skillTier) : 1)); this.hitBoss(skill ? 30 + this.skillTier * 9 : 12, a); }
     else {
       if (skill && this.marks >= 5) { this.exposed = 6; this.marks = 0; this.message = 'PHÁ GIÁP! Sáu giây để cả hai dồn sát thương.'; this.emit('phase', bossPosition, 'hung'); }
-      this.hitBoss(skill ? 65 : 24, a);
+      this.hitBoss(skill ? 65 + this.skillTier * 14 : 24, a);
     }
   }
   step(dt: number, input: Controls, remote = noInput()) {
@@ -151,7 +152,8 @@ export class Encounter {
         this.emit('slam', bossPosition, 'mei'); this.attackTimer = this.phase === 3 ? 2.7 : this.phase === 2 ? 3.5 : 4.5; this.telegraph = 0;
         for (const player of Object.values(this.actors)) {
           if (distance(player, bossPosition) < 10 && player.y < 0.65 && player.invulnerable <= 0 && player.hp > 0) {
-            player.hp = Math.max(0, player.hp - ((player === a ? input.guard : this.online && remote.guard) ? 5 : 17)); player.motion = player.hp <= 0 ? 'downed' : 'hit'; player.action = 0.4; player.invulnerable = 0.7;
+            const guarded = player === a ? input.guard : this.online && remote.guard;
+            player.hp = Math.max(0, player.hp - (guarded ? 5 : Math.max(11, 17 - this.skillTier * 2))); player.motion = player.hp <= 0 ? 'downed' : 'hit'; player.action = 0.4; player.invulnerable = 0.7;
           }
         }
       }
@@ -159,6 +161,20 @@ export class Encounter {
     if (a.hp <= 0 && p.hp <= 0) { this.status = 'defeat'; this.message = 'Liên kết bị đứt. Thử lại và né sóng chấn động!'; }
     else if (a.hp <= 0) { this.message = this.online ? 'Hưng đã gục · Mei đến gần và giữ E để hồi sinh.' : 'Bạn đã gục · Tab điều khiển đồng đội, đến gần và giữ E để hồi sinh.'; }
   }
+  /** Guest-side locomotion prediction. Combat and world state remain host-authoritative. */
+  predictLocalMovement(dt: number, input: Controls) {
+    dt = Math.min(0.05, Math.max(0, dt));
+    const actor = this.local;
+    actor.action = Math.max(0, actor.action - dt);
+    if (input.jump && actor.grounded && actor.hp > 0 && actor.action <= 0) { actor.vy = 6; actor.grounded = false; }
+    const moving = actor.hp > 0 && actor.action <= 0;
+    const speed = input.sprint ? (actor.role === 'hung' ? 6.5 : 6.7) : (actor.role === 'hung' ? 4.2 : 4.4);
+    actor.vx = damp(actor.vx, moving ? input.x * speed : 0, 14, dt); actor.vz = damp(actor.vz, moving ? input.z * speed : 0, 14, dt);
+    this.move(actor, dt);
+    if (Math.hypot(actor.vx, actor.vz) > 0.3 && actor.action <= 0) actor.yaw = turnTowards(actor.yaw, Math.atan2(actor.vx, actor.vz), dt);
+    actor.motion = !actor.grounded ? actor.vy > 0 ? 'jump' : 'fall' : Math.hypot(actor.vx, actor.vz) > 0.2 ? input.sprint ? 'run' : 'walk' : 'idle';
+  }
+
   private move(a: Actor, dt: number) {
     if (a.hp <= 0) return;
     a.x += a.vx * dt; a.z += a.vz * dt;

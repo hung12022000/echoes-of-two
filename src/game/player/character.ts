@@ -12,7 +12,7 @@ import type { AnimationGroup } from '@babylonjs/core/Animations/animationGroup';
 import '@babylonjs/loaders/glTF';
 import type { Actor } from '../combat/encounter';
 import type { Role } from '../rules';
-import { damp } from './motion';
+import { damp, turnTowards } from './motion';
 import { terrainHeight } from '../world/terrain';
 
 function addOceanboundOutfit(scene: Scene, root: TransformNode, role: Role) {
@@ -51,10 +51,10 @@ export async function loadCharacter(scene: Scene, role: Role, shadows: ShadowGen
   let actionTime = 0;
   return {
     root,
-    update(a: Actor, dt: number) {
-      const targetY = a.y + terrainHeight(a.x, a.z);
-      root.position.x = damp(root.position.x, a.x, 20, dt); root.position.z = damp(root.position.z, a.z, 20, dt);
-      root.position.y = damp(root.position.y, targetY, 24, dt); root.rotation.y = a.yaw;
+    update(a: Actor, dt: number, surfaceY = terrainHeight(a.x, a.z)) {
+      const targetY = a.y + surfaceY;
+      root.position.x = damp(root.position.x, a.x, 14, dt); root.position.z = damp(root.position.z, a.z, 14, dt);
+      root.position.y = damp(root.position.y, targetY, 18, dt); root.rotation.y = turnTowards(root.rotation.y, a.yaw, dt);
       // Undo our previous additive pose before Babylon advances the base clips.
       for (const [node, offset] of offsets) if (node.rotationQuaternion) node.rotationQuaternion = node.rotationQuaternion.multiply(offset.conjugate());
       offsets.clear();
